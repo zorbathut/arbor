@@ -16,7 +16,7 @@ namespace Arbor
         ///
         /// If you're using any multithreading, this must be threadsafe.
         /// </remarks>
-        public static Action<string> InfoHandler { get; set; } = str => System.Diagnostics.Debug.Print(str);
+        public static System.Action<string> InfoHandler { get; set; } = str => System.Diagnostics.Debug.Print(str);
 
         /// <summary>
         /// Callback for warning messages.
@@ -26,7 +26,7 @@ namespace Arbor
         ///
         /// If you're using any multithreading, this must be threadsafe.
         /// </remarks>
-        public static Action<string> WarningHandler { get; set; } = str => System.Diagnostics.Debug.Print(str);
+        public static System.Action<string> WarningHandler { get; set; } = str => System.Diagnostics.Debug.Print(str);
 
         /// <summary>
         /// Callback for error messages.
@@ -38,7 +38,7 @@ namespace Arbor
         ///
         /// If you're using any multithreading, this must be threadsafe.
         /// </remarks>
-        public static Action<string> ErrorHandler { get; set; } = str => { System.Diagnostics.Debug.Print(str); Console.WriteLine(str); throw new ArgumentException(str); };
+        public static System.Action<string> ErrorHandler { get; set; } = str => { System.Diagnostics.Debug.Print(str); Console.WriteLine(str); throw new ArgumentException(str); };
 
         /// <summary>
         /// Callback for unhandled exceptions.
@@ -50,6 +50,6 @@ namespace Arbor
         ///
         /// If you're using any multithreading, this must be threadsafe.
         /// </remarks>
-        public static Action<Exception> ExceptionHandler { get; set; } = e => { System.Diagnostics.Debug.Print(e.ToString()); Console.WriteLine(e.ToString()); throw e; };
+        public static System.Action<Exception> ExceptionHandler { get; set; } = e => { System.Diagnostics.Debug.Print(e.ToString()); Console.WriteLine(e.ToString()); throw e; };
     }
 }
