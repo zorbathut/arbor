@@ -29,5 +29,12 @@ namespace Arbor
             active = null;
             return Result.Success;
         }
+
+        public override void Reset()
+        {
+            base.Reset();
+
+            active = null;
+        }
     }
 }

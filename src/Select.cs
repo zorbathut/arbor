@@ -16,6 +16,7 @@ namespace Arbor
             if (active == children.Length)
             {
                 active = 0;
+                children[active].Reset();
             }
 
             while (active < children.Length)
@@ -23,7 +24,7 @@ namespace Arbor
                 var result = children[active].Update(context);
                 if (result == Result.Success)
                 {
-                    active = 0;
+                    active = children.Length;
                     return Result.Success;
                 }
                 else if (result == Result.Working)
@@ -33,12 +34,24 @@ namespace Arbor
                 else if (result == Result.Failure)
                 {
                     ++active;
+                    if (active < children.Length)
+                    {
+                        children[active].Reset();
+                    }
+
                     continue;
                 }
             }
 
             // I guess we iterated through everything!
             return Result.Failure;
+        }
+
+        public override void Reset()
+        {
+            base.Reset();
+
+            active = children.Length;
         }
     }
 }

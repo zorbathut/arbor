@@ -34,5 +34,7 @@ namespace Arbor
         }
 
         public abstract Result UpdateWorker(Context<T> context);
+
+        public virtual void Reset() { }
     }
 }
