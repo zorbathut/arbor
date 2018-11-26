@@ -15,9 +15,9 @@ namespace Arbor
             this.context = new Context<T>();
         }
 
-        public void Update(T state)
+        public void Update()
         {
-            root.Update(context, state);
+            root.Update(context, State);
         }
     }
 }
