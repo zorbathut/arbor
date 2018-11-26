@@ -11,7 +11,7 @@ namespace Arbor
             this.children = children;
         }
 
-        public override Result UpdateWorker(Context<T> context)
+        public override Result UpdateWorker(Context<T> context, T state)
         {
             if (active == children.Length)
             {
@@ -21,7 +21,7 @@ namespace Arbor
 
             while (active < children.Length)
             {
-                var result = children[active].Update(context);
+                var result = children[active].Update(context, state);
                 if (result == Result.Success)
                 {
                     ++active;

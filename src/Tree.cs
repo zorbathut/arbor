@@ -3,18 +3,21 @@ namespace Arbor
 {
     public class Tree<T>
     {
-        private Node<T> root;
+        private readonly Node<T> root;
+        private readonly Context<T> context;
 
-        public Tree(Node<T> root)
+        public T State { get; }
+
+        public Tree(Node<T> root, T state)
         {
             this.root = root;
+            this.State = state;
+            this.context = new Context<T>();
         }
 
         public void Update(T state)
         {
-            var context = new Context<T>() { state = state };
-
-            root.Update(context);
+            root.Update(context, state);
         }
     }
 }

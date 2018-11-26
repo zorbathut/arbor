@@ -3,21 +3,21 @@ using System.Collections.Generic;
 
 namespace Arbor
 {
-    public class Action<T> : Node<T>
+    public class Enumerable<T> : Node<T>
     {
-        private readonly Func<Context<T>, IEnumerable<Result>> action;
+        private readonly Func<Context<T>, T, IEnumerable<Result>> action;
         private IEnumerator<Result> active;
 
-        public Action(Func<Context<T>, IEnumerable<Result>> action, string name = null) : base(name : name)
+        public Enumerable(Func<Context<T>, T, IEnumerable<Result>> action, string name = null) : base(name : name)
         {
             this.action = action;
         }
 
-        public override Result UpdateWorker(Context<T> context)
+        public override Result UpdateWorker(Context<T> context, T state)
         {
             if (active == null || active.Current != Result.Working)
             {
-                active = action(context).GetEnumerator();
+                active = action(context, state).GetEnumerator();
             }
 
             if (active.MoveNext())
