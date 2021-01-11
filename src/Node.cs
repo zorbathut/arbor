@@ -16,7 +16,7 @@ namespace Arbor
 
     public abstract class Node<T>
     {
-        public Node(string name = null)
+        public Node()
         {
 
         }
@@ -35,5 +35,11 @@ namespace Arbor
         public abstract Result UpdateWorker(Context<T> context, T state);
 
         public virtual void Reset() { }
+
+        // meant to be called inline as kind of an optional-parameter standin
+        public Node<T> Tag(string name)
+        {
+            return this;
+        }
     }
 }

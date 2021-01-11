@@ -8,7 +8,7 @@ namespace Arbor
         private readonly Func<Context<T>, T, IEnumerable<Result>> action;
         private IEnumerator<Result> active;
 
-        public Enumerable(Func<Context<T>, T, IEnumerable<Result>> action, string name = null) : base(name : name)
+        public Enumerable(Func<Context<T>, T, IEnumerable<Result>> action)
         {
             this.action = action;
         }

@@ -7,7 +7,7 @@ namespace Arbor
     {
         private readonly Func<Context<T>, T, bool> condition;
 
-        public Function(Func<Context<T>, T, bool> condition, string name = null) : base(name : name)
+        public Function(Func<Context<T>, T, bool> condition)
         {
             this.condition = condition;
         }

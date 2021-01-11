@@ -6,7 +6,7 @@ namespace Arbor
         private readonly Node<T>[] children;
         private int active = 0;
 
-        public Sequence(Node<T>[] children, string name = null) : base(name : name)
+        public Sequence(params Node<T>[] children)
         {
             this.children = children;
         }
