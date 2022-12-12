@@ -1,57 +1,32 @@
 
+using System.Collections.Generic;
+
 namespace Arbor
 {
-    public class Select<T> : Node<T>
+    public class Select : Node
     {
-        private readonly Node<T>[] children;
-        private int active = 0;
-
-        public Select(Node<T>[] children)
+        public Select(List<Node> children) : base(children) { }
+        
+        public override IEnumerable<Result> Worker()
         {
-            this.children = children;
-        }
-
-        public override Result UpdateWorker(Context<T> context, T state)
-        {
-            if (active == children.Length)
+            foreach (var child in GetChildren())
             {
-                active = 0;
-                children[active].Reset();
-            }
-
-            while (active < children.Length)
-            {
-                var result = children[active].Update(context, state);
-                if (result == Result.Success)
+                while (true)
                 {
-                    active = children.Length;
-                    return Result.Success;
-                }
-                else if (result == Result.Working)
-                {
-                    return Result.Working;
-                }
-                else if (result == Result.Failure)
-                {
-                    ++active;
-                    if (active < children.Length)
+                    var result = child.Update();
+                    if (result == Result.Failure)
                     {
-                        children[active].Reset();
+                        // whoops! abort this, hide the failure, try another one
+                        break;
                     }
 
-                    continue;
+                    // either success, in which case we're done, or working
+                    yield return result;
                 }
             }
 
             // I guess we iterated through everything!
-            return Result.Failure;
-        }
-
-        public override void Reset()
-        {
-            base.Reset();
-
-            active = children.Length;
+            yield return Result.Failure;
         }
     }
 }

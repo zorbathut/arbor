@@ -1,23 +1,30 @@
 
+using System.Collections.Generic;
+
 namespace Arbor
 {
-    public class Tree<T>
+    public class Tree
     {
-        private readonly Node<T> root;
-        private readonly Context<T> context;
+        private readonly Node root;
 
-        public T State { get; }
+        private readonly List<Node> stack = new List<Node>();
 
-        public Tree(Node<T> root, T state)
+        internal readonly Context context;
+
+        // todo: blackboard?
+
+        public Tree(Node root)
         {
             this.root = root;
-            this.State = state;
-            this.context = new Context<T>();
+
+            this.context = new Context();
+
+            root.Init(this);
         }
 
         public void Update()
         {
-            root.Update(context, State);
+            root.Update();
         }
     }
 }

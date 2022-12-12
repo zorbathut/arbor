@@ -3,18 +3,18 @@ using System.Collections.Generic;
 
 namespace Arbor
 {
-    public class Function<T> : Node<T>
+    public class Function : Node
     {
-        private readonly Func<Context<T>, T, bool> condition;
+        private readonly Func<bool> condition;
 
-        public Function(Func<Context<T>, T, bool> condition)
+        public Function(Func<bool> condition)
         {
             this.condition = condition;
         }
 
-        public override Result UpdateWorker(Context<T> context, T state)
+        public override IEnumerable<Result> Worker()
         {
-            return condition(context, state) ? Result.Success : Result.Failure;
+            yield return condition() ? Result.Success : Result.Failure;
         }
     }
 }
