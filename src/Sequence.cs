@@ -3,13 +3,13 @@ using System.Collections.Generic;
 
 namespace Arbor
 {
-    public class Sequence : Node
+    public partial class Sequence : Node
     {
         public Sequence(List<Node> children) : base(children) { }
 
         public override IEnumerable<Result> Worker()
         {
-            foreach (var child in GetChildren())
+            foreach (var child in Children)
             {
                 while (true)
                 {
@@ -30,4 +30,3 @@ namespace Arbor
         }
     }
 }
-

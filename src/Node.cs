@@ -14,11 +14,11 @@ namespace Arbor
         public List<Node> stack = new List<Node>();
     }
 
-    public abstract class Node
+    public abstract partial class Node
     {
         private IEnumerator<Result> currentWorker;
         private readonly List<Node> children;
-        private Tree tree;
+        internal Tree tree;
 
         public Node()
         {
@@ -29,6 +29,9 @@ namespace Arbor
         {
             this.children = children;
         }
+
+        public Tree Tree { get => tree; }
+        public List<Node> Children { get => children; }
 
         internal void Init(Tree tree)
         {
@@ -41,11 +44,8 @@ namespace Arbor
                     child.Init(tree);
                 }
             }
-        }
 
-        public List<Node> GetChildren()
-        {
-            return children;
+            Register();
         }
 
         public Result Update()
@@ -107,5 +107,7 @@ namespace Arbor
                 }
             }
         }
+
+        public virtual void Register() { }
     }
 }

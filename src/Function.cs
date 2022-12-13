@@ -3,7 +3,7 @@ using System.Collections.Generic;
 
 namespace Arbor
 {
-    public class Function : Node
+    public partial class Function : Node
     {
         private readonly Func<bool> condition;
 

@@ -3,13 +3,13 @@ using System.Collections.Generic;
 
 namespace Arbor
 {
-    public class Select : Node
+    public partial class Select : Node
     {
         public Select(List<Node> children) : base(children) { }
         
         public override IEnumerable<Result> Worker()
         {
-            foreach (var child in GetChildren())
+            foreach (var child in Children)
             {
                 while (true)
                 {
