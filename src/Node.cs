@@ -50,7 +50,7 @@ namespace Arbor
 
         public Result Update()
         {
-            tree.context.stack.Add(this);
+            tree.stack.Add(this);
 
             if (currentWorker == null)
             {
@@ -67,7 +67,7 @@ namespace Arbor
                 Dbg.Ex(e);
                 moved = false;
             }
-            tree.context.stack.RemoveAt(tree.context.stack.Count - 1);
+            tree.stack.RemoveAt(tree.stack.Count - 1);
 
             if (!moved)
             {

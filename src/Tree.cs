@@ -7,17 +7,13 @@ namespace Arbor
     {
         private readonly Node root;
 
-        private readonly List<Node> stack = new List<Node>();
-
-        internal readonly Context context;
+        internal readonly List<Node> stack = new List<Node>();
 
         // todo: blackboard?
 
         public Tree(Node root)
         {
             this.root = root;
-
-            this.context = new Context();
 
             root.Init(this);
         }
