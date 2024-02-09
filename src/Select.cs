@@ -5,11 +5,16 @@ namespace Arbor
 {
     public partial class Select : Node
     {
-        public Select(List<Node> children) : base(children) { }
-        
+        public Select(List<Node> children)
+        {
+            m_children = children;
+        }
+
+        private List<Node> m_children;
+
         public override IEnumerable<Result> Worker()
         {
-            foreach (var child in Children)
+            foreach (var child in m_children)
             {
                 while (true)
                 {

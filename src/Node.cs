@@ -17,35 +17,15 @@ namespace Arbor
     public abstract partial class Node
     {
         private IEnumerator<Result> currentWorker;
-        private readonly List<Node> children;
         internal Tree tree;
 
-        public Node()
-        {
-            
-        }
-
-        protected Node(List<Node> children)
-        {
-            this.children = children;
-        }
-
         public Tree Tree { get => tree; }
-        public List<Node> Children { get => children; }
 
         internal void Init(Tree tree)
         {
             this.tree = tree;
 
-            if (children != null)
-            {
-                foreach (var child in children)
-                {
-                    child.Init(tree);
-                }
-            }
-
-            Register();
+            InitFields();
         }
 
         public Result Update()
@@ -96,18 +76,17 @@ namespace Arbor
 
         public virtual void Reset()
         {
-            currentWorker = null;
-
-            // this is currently *very inefficient* and I am doing it anyway
-            if (children != null)
+            // already done, stop recursiving
+            if (currentWorker == null)
             {
-                foreach (var child in children)
-                {
-                    child.Reset();
-                }
+                return;
             }
+
+            currentWorker = null;
+            ResetFields();
         }
 
-        public virtual void Register() { }
+        public virtual void InitFields() { }
+        public virtual void ResetFields() { }
     }
 }

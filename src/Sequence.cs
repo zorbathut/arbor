@@ -5,11 +5,16 @@ namespace Arbor
 {
     public partial class Sequence : Node
     {
-        public Sequence(List<Node> children) : base(children) { }
+        public Sequence(List<Node> children)
+        {
+            m_children = children;
+        }
+
+        private List<Node> m_children;
 
         public override IEnumerable<Result> Worker()
         {
-            foreach (var child in Children)
+            foreach (var child in m_children)
             {
                 while (true)
                 {

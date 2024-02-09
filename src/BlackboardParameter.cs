@@ -13,9 +13,9 @@ namespace Arbor
 
         internal BlackboardParameter() { }
 
-        public static BlackboardParameter<T> Local(string id)
+        public static BlackboardParameter<T> Tree(string id)
         {
-            return new BlackboardParameter<T> { identifier = new BlackboardIdentifier{ bb = "local", id = id } };
+            return new BlackboardParameter<T> { identifier = new BlackboardIdentifier{ bb = "tree", id = id } };
         }
         public static BlackboardParameter<T> Global(string id)
         {

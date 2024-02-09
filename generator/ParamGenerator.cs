@@ -10,48 +10,31 @@ namespace Arbor
     {
         public void Initialize(GeneratorInitializationContext context)
         {
-            
+
         }
 
         public void Execute(GeneratorExecutionContext context)
         {
-            var arborNode = context.Compilation.GetTypeByMetadataName("Arbor.Node");
-            var arborBlackboardParameter = context.Compilation.GetTypeByMetadataName("Arbor.BlackboardParameter`1");
+            var arborNodeType = context.Compilation.GetTypeByMetadataName("Arbor.Node");
+            var arborBlackboardParameterType = context.Compilation.GetTypeByMetadataName("Arbor.BlackboardParameter`1");
+            var listType = context.Compilation.GetTypeByMetadataName(typeof(List<>).FullName);
 
             var fullyQualified = SymbolDisplayFormat.FullyQualifiedFormat.WithGlobalNamespaceStyle(SymbolDisplayGlobalNamespaceStyle.Omitted);
 
             var nowhereLocation = Location.Create(context.Compilation.SyntaxTrees.First(), new Microsoft.CodeAnalysis.Text.TextSpan(1, 2));
 
-            if (arborNode == null)
+            if (arborNodeType == null)
             {
                 context.ReportDiagnostic(Diagnostic.Create(new DiagnosticDescriptor("a", "", "missin' arbor node", "", DiagnosticSeverity.Error, true), nowhereLocation));
             }
-            if (arborBlackboardParameter == null)
+            if (arborBlackboardParameterType == null)
             {
                 context.ReportDiagnostic(Diagnostic.Create(new DiagnosticDescriptor("a", "", "missin' arbor bbp", "", DiagnosticSeverity.Error, true), nowhereLocation));
             }
 
             foreach (var type in context.Compilation.SyntaxTrees.SelectMany(tree =>
-                tree.GetRoot().DescendantNodes().OfType<Microsoft.CodeAnalysis.CSharp.Syntax.ClassDeclarationSyntax>().Select (cds => context.Compilation.GetSemanticModel(tree).GetDeclaredSymbol(cds)).Where(type =>
-                {
-                    System.Diagnostics.Debug.WriteLine($"Processing {type}");
-                    while (type != null)
-                    {
-                        if (SymbolEqualityComparer.Default.Equals(type, arborNode))
-                        {
-                            System.Diagnostics.Debug.WriteLine($"yay");
-                            return true;
-                        }
-
-                        type = type.BaseType;
-                    }
-                        
-                    return false;
-                })
-            ))
+                tree.GetRoot().DescendantNodes().OfType<Microsoft.CodeAnalysis.CSharp.Syntax.ClassDeclarationSyntax>().Select(cds => context.Compilation.GetSemanticModel(tree).GetDeclaredSymbol(cds)).Where(type => type.InheritsFrom(arborNodeType))))
             {
-                System.Diagnostics.Debug.WriteLine($"  really doing {type}");
-
                 var nodeNamespace = type.ContainingNamespace?.ToDisplayString(fullyQualified);
 
                 bool foundSomething = false;
@@ -78,7 +61,8 @@ namespace Arbor
                     source.AppendLine($"partial class {typeHierarchy.Name} {{");
                 }
 
-                var register = new System.Text.StringBuilder();
+                var initFields = new System.Text.StringBuilder();
+                var resetFields = new System.Text.StringBuilder();
                 foreach (var bbp in type.GetMembers().OfType<IFieldSymbol>())
                 {
                     if (!(bbp.Type is INamedTypeSymbol namedType))
@@ -86,32 +70,55 @@ namespace Arbor
                         continue;
                     }
 
-                    if (!SymbolEqualityComparer.Default.Equals(namedType.ConstructedFrom, arborBlackboardParameter))
+                    // Check to see if this is a blackboard parameter
+                    if (SymbolEqualityComparer.Default.Equals(namedType.ConstructedFrom, arborBlackboardParameterType))
                     {
-                        continue;
+                        if (!bbp.Name.EndsWith("Id"))
+                        {
+                            context.ReportDiagnostic(Diagnostic.Create(new DiagnosticDescriptor("a", "", "no bad id suffix", "", DiagnosticSeverity.Error, true), nowhereLocation));
+                        }
+
+                        foundSomething = true;
+
+                        var typeString = namedType.TypeArguments[0].ToDisplayString(fullyQualified);
+                        source.AppendLine($"protected {typeString} {bbp.Name.RemoveSuffix("Id")} {{");
+                        source.AppendLine($"  get => {bbp.Name}.Get(Tree);");
+                        source.AppendLine($"  set => {bbp.Name}.Set(Tree, value);");
+                        source.AppendLine($"}}");
+
+                        initFields.AppendLine($"{bbp.Name}.Register(Tree);");
                     }
 
-                    // yay we have a match
-
-                    if (!bbp.Name.EndsWith("Id"))
+                    // Check to see if this is derived from a Node
+                    if (namedType.InheritsFrom(arborNodeType))
                     {
-                        context.ReportDiagnostic(Diagnostic.Create(new DiagnosticDescriptor("a", "", "no bad id suffix", "", DiagnosticSeverity.Error, true), nowhereLocation));
+                        foundSomething = true;
+                        initFields.AppendLine($"{bbp.Name}.Init(Tree);");
+                        resetFields.AppendLine($"{bbp.Name}.Reset();");
                     }
 
-                    foundSomething = true;
-
-                    var typeString = namedType.TypeArguments[0].ToDisplayString(fullyQualified);
-                    source.AppendLine($"{typeString} {bbp.Name.RemoveSuffix("Id")} {{");
-                    source.AppendLine($"  get => {bbp.Name}.Get(Tree);");
-                    source.AppendLine($"  set => {bbp.Name}.Set(Tree, value);");
-                    source.AppendLine($"}}");
-
-                    register.AppendLine($"{bbp.Name}.Register(Tree);");
+                    // Check to see if this is a List<Node> or similar
+                    var genericType = namedType.ConstructedFrom;
+                    if (SymbolEqualityComparer.Default.Equals(genericType.ConstructedFrom, listType))
+                    {
+                        var typeArgument = namedType.TypeArguments.FirstOrDefault();
+                        if (typeArgument.InheritsFrom(arborNodeType))
+                        {
+                            foundSomething = true;
+                            initFields.AppendLine($"foreach (var item in {bbp.Name}) item?.Init(Tree);");
+                            resetFields.AppendLine($"foreach (var item in {bbp.Name}) item?.Reset();");
+                        }
+                    }
                 }
 
-                source.AppendLine($"public override void Register() {{");
-                source.AppendLine($"  base.Register();");
-                source.AppendLine(register.ToString());
+                source.AppendLine($"public override void InitFields() {{");
+                source.AppendLine($"  base.InitFields();");
+                source.AppendLine(initFields.ToString());
+                source.AppendLine($"}}");
+
+                source.AppendLine($"public override void ResetFields() {{");
+                source.AppendLine($"  base.ResetFields();");
+                source.AppendLine(resetFields.ToString());
                 source.AppendLine($"}}");
 
                 foreach (var typeHierarchy in typeNesting)

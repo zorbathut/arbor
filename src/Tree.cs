@@ -15,15 +15,20 @@ namespace Arbor
         {
             this.root = root;
 
-            blackboards["local"] = new Blackboard();
-            blackboards["global"] = Blackboard.Global;
+            blackboards["tree"] = new Blackboard();
+            blackboards["global"] = Arbor.Blackboard.Global;
 
-            root.Init(this);
+            root?.Init(this);
         }
 
         public void Update()
         {
-            root.Update();
+            root?.Update();
+        }
+
+        public Blackboard Blackboard(string id)
+        {
+            return blackboards[id];
         }
 
         internal T BlackboardGet<T>(BlackboardIdentifier identifier)

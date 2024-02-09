@@ -19,7 +19,7 @@ namespace Arbor
             {
                 if (types[id] != type)
                 {
-                    Dbg.Err("Type mismatch");
+                    Dbg.Err($"Type mismatch: parameter `{id}` is registered as {types[id]} but being accessed as {type}");
                     return;
                 }
             }
@@ -33,35 +33,46 @@ namespace Arbor
         {
             if (!types.ContainsKey(id))
             {
-                Dbg.Err("Missing item");
+                Dbg.Err($"Missing item `{id}` when trying to get blackboard info");
                 return default;
             }
 
             if (types[id] != typeof(T))
             {
-                Dbg.Err("Type mismatch");
+                Dbg.Err($"Type mismatch: parameter `{id}` is registered as {types[id]} but being accessed as {typeof(T)}");
                 return default;
             }
 
             data.TryGetValue(id, out object result);
-            return (T)result;
+            if (result != null)
+            {
+                return (T)result;
+            }
+
+            return default;
         }
 
         public void Set<T>(string id, T item)
         {
             if (!types.ContainsKey(id))
             {
-                Dbg.Err("Missing item");
+                Dbg.Err($"Missing item `{id}` when trying to set blackboard info");
                 return;
             }
 
             if (types[id] != typeof(T))
             {
-                Dbg.Err("Type mismatch");
+                Dbg.Err($"Type mismatch: parameter `{id}` is registered as {types[id]} but being accessed as {typeof(T)}");
                 return;
             }
 
             data[id] = item;
+        }
+
+        public void RegisterAndSet<T>(string id, T item)
+        {
+            Register(id, typeof(T));
+            Set(id, item);
         }
     }
 }
