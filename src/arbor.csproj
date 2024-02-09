@@ -6,6 +6,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\generator\generator.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
+    <ProjectReference Include="..\lib\dec\src\dec.csproj" />
   </ItemGroup>
 
 </Project>

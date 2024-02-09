@@ -1,0 +1,3 @@
+[submodule "lib/dec"]
+	path = lib/dec
+	url = git@github.com:zorbathut/dec.git
