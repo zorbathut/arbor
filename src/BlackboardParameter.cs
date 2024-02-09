@@ -26,19 +26,19 @@ namespace Arbor
             return new BlackboardParameter<T> { identifier = new BlackboardIdentifier { bb = bbid, id = itemid } };
         }
 
-        public T Get(Tree tree)
+        public T Get()
         {
-            return tree.BlackboardGet<T>(identifier);
+            return Arbor.Tree.Current.Value.BlackboardGet<T>(identifier);
         }
 
-        public void Set(Tree tree, T value)
+        public void Set(T value)
         {
-            tree.BlackboardSet<T>(identifier, value);
+            Arbor.Tree.Current.Value.BlackboardSet<T>(identifier, value);
         }
 
-        public void Register(Tree tree)
+        public void Register()
         {
-            tree.Register<T>(identifier);
+            Arbor.Tree.Current.Value.Register<T>(identifier);
         }
     }
 }

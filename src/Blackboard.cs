@@ -11,8 +11,6 @@ namespace Arbor
         private readonly Dictionary<string, object> data = new Dictionary<string, object>();
         private readonly Dictionary<string, Type> types = new Dictionary<string, Type>();
 
-        public static Blackboard Global = new Blackboard();
-
         public void Register(string id, Type type)
         {
             if (types.ContainsKey(id))

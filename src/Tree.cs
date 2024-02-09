@@ -5,25 +5,51 @@ namespace Arbor
 {
     public class Tree
     {
+        public static System.Threading.ThreadLocal<Tree> Current = new();
+        private struct Scope : System.IDisposable
+        {
+            private Tree old;
+            private Tree current;
+            public Scope(Tree tree, Blackboard global)
+            {
+                old = Current.Value;
+                current = tree;
+                Current.Value = current;
+                current.blackboards["global"] = global;
+            }
+
+            public void Dispose()
+            {
+                Assert.AreSame(Current.Value, current);
+                current.blackboards["global"] = null;
+                Current.Value = old;
+            }
+        }
+
         private readonly Node root;
 
         internal readonly List<Node> stack = new List<Node>();
 
         private readonly Dictionary<string, Blackboard> blackboards = new Dictionary<string, Blackboard>();
 
-        public Tree(Node root)
+        public Tree(Node root, Blackboard global)
         {
             this.root = root;
 
             blackboards["tree"] = new Blackboard();
-            blackboards["global"] = Arbor.Blackboard.Global;
 
-            root?.Init(this);
+            using (new Scope(this, global))
+            {
+                root?.Init();
+            }
         }
 
-        public void Update()
+        public void Update(Blackboard global)
         {
-            root?.Update();
+            using (new Scope(this, global))
+            {
+                root?.Update();
+            }
         }
 
         public Blackboard Blackboard(string id)

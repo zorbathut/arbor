@@ -17,29 +17,25 @@ namespace Arbor
     public abstract partial class Node
     {
         private IEnumerator<Result> currentWorker;
-        internal Tree tree;
 
-        public Tree Tree { get => tree; }
-
-        internal void Init(Tree tree)
+        internal void Init()
         {
-            this.tree = tree;
-
             InitFields();
         }
 
         public Result Update()
         {
+            var tree = Tree.Current.Value;
             tree.stack.Add(this);
-
-            if (currentWorker == null)
-            {
-                currentWorker = Worker().GetEnumerator();
-            }
 
             bool moved;
             try
             {
+                if (currentWorker == null)
+                {
+                    currentWorker = Worker().GetEnumerator();
+                }
+
                 moved = currentWorker.MoveNext();
             }
             catch (System.Exception e)

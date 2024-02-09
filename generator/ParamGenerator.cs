@@ -82,18 +82,18 @@ namespace Arbor
 
                         var typeString = namedType.TypeArguments[0].ToDisplayString(fullyQualified);
                         source.AppendLine($"protected {typeString} {bbp.Name.RemoveSuffix("Id")} {{");
-                        source.AppendLine($"  get => {bbp.Name}.Get(Tree);");
-                        source.AppendLine($"  set => {bbp.Name}.Set(Tree, value);");
+                        source.AppendLine($"  get => {bbp.Name}.Get();");
+                        source.AppendLine($"  set => {bbp.Name}.Set(value);");
                         source.AppendLine($"}}");
 
-                        initFields.AppendLine($"{bbp.Name}.Register(Tree);");
+                        initFields.AppendLine($"{bbp.Name}.Register();");
                     }
 
                     // Check to see if this is derived from a Node
                     if (namedType.InheritsFrom(arborNodeType))
                     {
                         foundSomething = true;
-                        initFields.AppendLine($"{bbp.Name}.Init(Tree);");
+                        initFields.AppendLine($"{bbp.Name}.Init();");
                         resetFields.AppendLine($"{bbp.Name}.Reset();");
                     }
 
@@ -105,7 +105,7 @@ namespace Arbor
                         if (typeArgument.InheritsFrom(arborNodeType))
                         {
                             foundSomething = true;
-                            initFields.AppendLine($"foreach (var item in {bbp.Name}) item?.Init(Tree);");
+                            initFields.AppendLine($"foreach (var item in {bbp.Name}) item?.Init();");
                             resetFields.AppendLine($"foreach (var item in {bbp.Name}) item?.Reset();");
                         }
                     }

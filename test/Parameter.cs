@@ -1,3 +1,5 @@
+using Arbor;
+
 namespace ArborTest
 {
     using NUnit.Framework;
@@ -22,19 +24,20 @@ namespace ArborTest
         [Test]
         public void Basic()
         {
+            var blackboardGlobal = new Blackboard();
             Arbor.Tree tree = new Arbor.Tree(new ParameterTestNode() {
                 ReadId = Arbor.BlackboardParameter<string>.Global("read"),
                 WriteId = Arbor.BlackboardParameter<string>.Global("write"),
-            });
+            }, blackboardGlobal);
 
-            Arbor.Blackboard.Global.Set<string>("read", "hello");
-            Arbor.Blackboard.Global.Set<string>("write", "goodbye");
+            blackboardGlobal.Set<string>("read", "hello");
+            blackboardGlobal.Set<string>("write", "goodbye");
 
-            Assert.AreEqual("goodbye", Arbor.Blackboard.Global.Get<string>("write"));
+            Assert.AreEqual("goodbye", blackboardGlobal.Get<string>("write"));
 
-            tree.Update();
+            tree.Update(blackboardGlobal);
 
-            Assert.AreEqual("hello", Arbor.Blackboard.Global.Get<string>("write"));
+            Assert.AreEqual("hello", blackboardGlobal.Get<string>("write"));
         }
     }
 }
