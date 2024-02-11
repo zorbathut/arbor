@@ -11,6 +11,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "generator", "generator\gene
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "dec", "lib\dec\src\dec.csproj", "{6EEAB672-3F3C-4B65-85F3-A38448FAE9BF}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "recorder_enumerator", "lib\dec\extra\recorder_enumerator\src\recorder_enumerator.csproj", "{578AED14-EF67-46FF-A519-1F4818995D11}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -51,6 +53,14 @@ Global
 		{6EEAB672-3F3C-4B65-85F3-A38448FAE9BF}.Release|Any CPU.Build.0 = Release|Any CPU
 		{6EEAB672-3F3C-4B65-85F3-A38448FAE9BF}.Release|x86.ActiveCfg = Release|Any CPU
 		{6EEAB672-3F3C-4B65-85F3-A38448FAE9BF}.Release|x86.Build.0 = Release|Any CPU
+		{578AED14-EF67-46FF-A519-1F4818995D11}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{578AED14-EF67-46FF-A519-1F4818995D11}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{578AED14-EF67-46FF-A519-1F4818995D11}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{578AED14-EF67-46FF-A519-1F4818995D11}.Debug|x86.Build.0 = Debug|Any CPU
+		{578AED14-EF67-46FF-A519-1F4818995D11}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{578AED14-EF67-46FF-A519-1F4818995D11}.Release|Any CPU.Build.0 = Release|Any CPU
+		{578AED14-EF67-46FF-A519-1F4818995D11}.Release|x86.ActiveCfg = Release|Any CPU
+		{578AED14-EF67-46FF-A519-1F4818995D11}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

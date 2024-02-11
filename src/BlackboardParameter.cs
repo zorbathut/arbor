@@ -1,13 +1,19 @@
 
 namespace Arbor
 {
-    internal struct BlackboardIdentifier
+    internal struct BlackboardIdentifier : Dec.IRecordable
     {
         public string bb;
         public string id;
+
+        public void Record(Dec.Recorder recorder)
+        {
+            recorder.Record(ref bb, nameof(bb));
+            recorder.Record(ref id, nameof(id));
+        }
     }
 
-    public class BlackboardParameter<T>
+    public class BlackboardParameter<T> : Dec.IRecordable
     {
         BlackboardIdentifier identifier;
 
@@ -39,6 +45,11 @@ namespace Arbor
         public void Register()
         {
             Arbor.Tree.Current.Value.Register<T>(identifier);
+        }
+
+        public void Record(Dec.Recorder recorder)
+        {
+            recorder.RecordAsThis(ref identifier);
         }
     }
 }

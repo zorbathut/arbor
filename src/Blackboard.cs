@@ -6,10 +6,10 @@ using System.Threading.Tasks;
 
 namespace Arbor
 {
-    public class Blackboard
+    public class Blackboard : Dec.IRecordable
     {
-        private readonly Dictionary<string, object> data = new Dictionary<string, object>();
-        private readonly Dictionary<string, Type> types = new Dictionary<string, Type>();
+        private Dictionary<string, object> data = new Dictionary<string, object>();
+        private Dictionary<string, Type> types = new Dictionary<string, Type>();
 
         public void Register(string id, Type type)
         {
@@ -71,6 +71,12 @@ namespace Arbor
         {
             Register(id, typeof(T));
             Set(id, item);
+        }
+
+        public void Record(Dec.Recorder recorder)
+        {
+            recorder.Record(ref data, nameof(data));
+            recorder.Record(ref types, nameof(types));
         }
     }
 }

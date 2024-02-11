@@ -44,6 +44,7 @@ namespace ArborTest
                     throw new ArgumentException(str);
                 }
             };
+            Dec.Config.WarningHandler = Arbor.Config.WarningHandler;
 
             Arbor.Config.ErrorHandler = str => {
                 System.Diagnostics.Debug.Print(str);
@@ -60,10 +61,14 @@ namespace ArborTest
                     throw new ArgumentException(str);
                 }
             };
+            Dec.Config.ErrorHandler = Arbor.Config.ErrorHandler;
 
             Arbor.Config.ExceptionHandler = e => {
                 Arbor.Config.ErrorHandler(e.ToString());
             };
+            Dec.Config.ExceptionHandler = Arbor.Config.ExceptionHandler;
+
+            Dec.Config.ConverterFactory = Dec.RecorderEnumerator.Config.ConverterFactory;
         }
 
         protected void ExpectWarnings(Action action)
@@ -92,6 +97,30 @@ namespace ArborTest
             Assert.IsTrue(handledError);
             handlingErrors = false;
             handledError = false;
+        }
+
+        public enum CloneBehavior
+        {
+            Nop,
+            Clone,
+            WriteRead,
+        }
+
+        public void DoCloneBehavior(CloneBehavior cloneBehavior, ref Arbor.Tree tree, ref Arbor.Blackboard globalBlackboard)
+        {
+            switch (cloneBehavior)
+            {
+                case CloneBehavior.Nop:
+                    break;
+
+                case CloneBehavior.Clone:
+                    (tree, globalBlackboard) = Dec.Recorder.Clone((tree, globalBlackboard));
+                    break;
+
+                case CloneBehavior.WriteRead:
+                    (tree, globalBlackboard) = Dec.Recorder.Read<(Arbor.Tree, Arbor.Blackboard)>(Dec.Recorder.Write((tree, globalBlackboard)));
+                    break;
+            }
         }
     }
 }

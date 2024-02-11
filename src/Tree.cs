@@ -3,7 +3,7 @@ using System.Collections.Generic;
 
 namespace Arbor
 {
-    public class Tree
+    public class Tree : Dec.IRecordable
     {
         public static System.Threading.ThreadLocal<Tree> Current = new();
         private struct Scope : System.IDisposable
@@ -26,12 +26,13 @@ namespace Arbor
             }
         }
 
-        private readonly Node root;
+        private Node root;
+        private Dictionary<string, Blackboard> blackboards = new Dictionary<string, Blackboard>();
 
-        internal readonly List<Node> stack = new List<Node>();
+        // ephemeral
+        internal List<Node> stack = new List<Node>();
 
-        private readonly Dictionary<string, Blackboard> blackboards = new Dictionary<string, Blackboard>();
-
+        private Tree() { }  // exists just for Dec
         public Tree(Node root, Blackboard global)
         {
             this.root = root;
@@ -70,6 +71,12 @@ namespace Arbor
         internal void Register<T>(BlackboardIdentifier identifier)
         {
             blackboards[identifier.bb].Register(identifier.id, typeof(T));
+        }
+
+        public void Record(Dec.Recorder recorder)
+        {
+            recorder.Shared().Record(ref root, nameof(root));
+            recorder.Record(ref blackboards, nameof(blackboards));
         }
     }
 }

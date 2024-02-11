@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using Dec;
 
 namespace Arbor
 {
@@ -9,12 +10,7 @@ namespace Arbor
         Failure,
     }
 
-    public class Context
-    {
-        public List<Node> stack = new List<Node>();
-    }
-
-    public abstract partial class Node
+    public abstract partial class Node : Dec.IRecordable
     {
         private IEnumerator<Result> currentWorker;
 
@@ -84,5 +80,10 @@ namespace Arbor
 
         public virtual void InitFields() { }
         public virtual void ResetFields() { }
+
+        public virtual void Record(Recorder recorder)
+        {
+            recorder.Record(ref currentWorker, nameof(currentWorker));
+        }
     }
 }
