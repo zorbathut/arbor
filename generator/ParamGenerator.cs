@@ -75,7 +75,7 @@ namespace Arbor
                     {
                         if (!bbp.Name.EndsWith("Id"))
                         {
-                            context.ReportDiagnostic(Diagnostic.Create(new DiagnosticDescriptor("a", "", "no bad id suffix", "", DiagnosticSeverity.Error, true), nowhereLocation));
+                            context.ReportDiagnostic(Diagnostic.Create(new DiagnosticDescriptor("a", "", "Blackboard parameters must have an `Id` suffix.", "", DiagnosticSeverity.Error, true), nowhereLocation));
                         }
 
                         foundSomething = true;
