@@ -5,6 +5,7 @@ namespace ArborTest
     using System.Collections.Generic;
 
     [TestFixture]
+    [Dec.RecorderEnumerator.RecordableClosures]
     public class Sequence : Base
     {
         static int stage1_seen = 0;
@@ -15,7 +16,6 @@ namespace ArborTest
         static Result stage6_rf = Result.Working;
         static int stage7_seen = 0;
 
-        [Dec.RecorderEnumerator.RecordableClosures]
         [Test]
         public void Basic([Values] CloneBehavior cloneBehavior)
         {

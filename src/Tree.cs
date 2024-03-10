@@ -53,6 +53,11 @@ namespace Arbor
             }
         }
 
+        public void Reset()
+        {
+            root.Reset();
+        }
+
         public Blackboard Blackboard(string id)
         {
             return blackboards[id];

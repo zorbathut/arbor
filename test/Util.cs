@@ -1,9 +1,12 @@
+using Dec;
+
 namespace ArborTest
 {
     using Arbor;
     using System;
     using System.Collections.Generic;
 
+    [Dec.RecorderEnumerator.RecordableClosures]
     public partial class ResultFunction : Node
     {
         private Func<Result> condition;
@@ -28,6 +31,18 @@ namespace ArborTest
             base.Record(recorder);
 
             recorder.Record(ref condition, nameof(condition));
+        }
+    }
+
+    public partial class WaitNode : Node
+    {
+        [Dec.RecorderEnumerator.RecordableEnumerable]
+        public override IEnumerable<Result> Worker()
+        {
+            while (true)
+            {
+                yield return Result.Working;
+            }
         }
     }
 }
