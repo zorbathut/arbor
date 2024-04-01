@@ -44,6 +44,14 @@ namespace Arbor
             if (!moved)
             {
                 Dbg.Err("Worker didn't exit properly, assuming failure");
+                try
+                {
+                    Reset();
+                }
+                catch (System.Exception e)
+                {
+                    Dbg.Ex(e);
+                }
                 return Result.Failure;
             }
 
