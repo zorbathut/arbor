@@ -133,7 +133,13 @@ namespace Arbor
 
                 if (foundSomething)
                 {
-                    context.AddSource($"{type.Name}.g.cs", source.ToString());
+                    // assemble the full type name
+                    var typeName = string.Join(".", typeNesting.Select(t => t.Name).Reverse());
+                    if (nodeNamespace != null)
+                    {
+                        typeName = $"{nodeNamespace}.{typeName}";
+                    }
+                    context.AddSource($"{typeName}.g.cs", source.ToString());
                 }
             }
         }
