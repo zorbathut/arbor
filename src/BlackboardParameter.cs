@@ -47,6 +47,11 @@ namespace Arbor
             Arbor.Tree.Current.Value.Register<T>(identifier);
         }
 
+        public void RegisterWith(Tree tree)
+        {
+            tree.Register<T>(identifier);
+        }
+
         public void Record(Dec.Recorder recorder)
         {
             recorder.RecordAsThis(ref identifier);
