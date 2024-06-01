@@ -6,12 +6,12 @@ namespace Arbor
     public partial class Sequence : Node
     {
         private Sequence() { }  // exists just for Dec
-        public Sequence(List<Node> children)
+        public Sequence(params Node[] children)
         {
             m_children = children;
         }
 
-        private List<Node> m_children;
+        private Node[] m_children;
 
         [Dec.RecorderEnumerator.RecordableEnumerable]
         public override IEnumerable<Result> Worker()

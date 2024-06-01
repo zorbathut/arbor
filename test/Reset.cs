@@ -23,12 +23,11 @@ namespace ArborTest
         public void Basic([Values] CloneBehavior cloneBehavior)
         {
             var blackboardGlobal = new Blackboard();
-            var tree = new Arbor.Tree(new Arbor.Sequence(new List<Node>
-            {
+            var tree = new Arbor.Tree(new Arbor.Sequence(
                 new IncrementNode(),
                 new WaitNode(),
-                new IncrementNode(),
-            }), blackboardGlobal);
+                new IncrementNode()
+            ), blackboardGlobal);
 
             IncrementNode.IncrementValue = 0;
             Assert.AreEqual(0, IncrementNode.IncrementValue);

@@ -18,6 +18,7 @@ namespace Arbor
             var arborNodeType = context.Compilation.GetTypeByMetadataName("Arbor.Node");
             var arborBlackboardParameterType = context.Compilation.GetTypeByMetadataName("Arbor.BlackboardParameter`1");
             var listType = context.Compilation.GetTypeByMetadataName(typeof(List<>).FullName);
+            var arrayType = context.Compilation.GetTypeByMetadataName(typeof(System.Array).FullName);
 
             var fullyQualified = SymbolDisplayFormat.FullyQualifiedFormat.WithGlobalNamespaceStyle(SymbolDisplayGlobalNamespaceStyle.Omitted);
 
@@ -100,6 +101,18 @@ namespace Arbor
                     // Check to see if this is a List<Node> or similar
                     var genericType = namedType.ConstructedFrom;
                     if (SymbolEqualityComparer.Default.Equals(genericType.ConstructedFrom, listType))
+                    {
+                        var typeArgument = namedType.TypeArguments.FirstOrDefault();
+                        if (typeArgument.InheritsFrom(arborNodeType))
+                        {
+                            foundSomething = true;
+                            initFields.AppendLine($"foreach (var item in {bbp.Name}) item?.Init();");
+                            resetFields.AppendLine($"foreach (var item in {bbp.Name}) item?.Reset();");
+                        }
+                    }
+
+                    // Check to see if this is a Node[] or similar
+                    if (SymbolEqualityComparer.Default.Equals(namedType.ConstructedFrom, arrayType))
                     {
                         var typeArgument = namedType.TypeArguments.FirstOrDefault();
                         if (typeArgument.InheritsFrom(arborNodeType))
