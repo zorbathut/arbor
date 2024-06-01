@@ -73,6 +73,21 @@ namespace Arbor
             Set(id, item);
         }
 
+        public IEnumerable<KeyValuePair<string, object>> GetAll_Debug()
+        {
+            // splice in the types as default objects
+            var dataCopy = new Dictionary<string, object>(data);
+            foreach (var kvp in types)
+            {
+                if (!dataCopy.ContainsKey(kvp.Key))
+                {
+                    dataCopy[kvp.Key] = kvp.Value.IsValueType ? Activator.CreateInstance(kvp.Value) : null;
+                }
+            }
+
+            return dataCopy;
+        }
+
         public void Record(Dec.Recorder recorder)
         {
             recorder.Record(ref data, nameof(data));
