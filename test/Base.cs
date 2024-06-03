@@ -2,6 +2,7 @@ namespace ArborTest
 {
     using NUnit.Framework;
     using System;
+    using System.Reflection;
 
     [TestFixture]
     public class Base
@@ -12,7 +13,7 @@ namespace ArborTest
             // we turn on error handling so that global-state resets can work even if we're in the wrong mode
             handlingErrors = true;
 
-            // reset any global state here, if we have it
+            Dec.Database.Clear();
 
             handlingWarnings = false;
             handledWarning = false;
@@ -71,6 +72,11 @@ namespace ArborTest
             Dec.Config.ConverterFactory = Dec.RecorderEnumerator.Config.ConverterFactory;
         }
 
+        public static void UpdateTestParameters(Dec.Config.UnitTestParameters parameters)
+        {
+            typeof(Dec.Config).GetField("TestParameters", BindingFlags.NonPublic | BindingFlags.Static).SetValue(null, parameters);
+        }
+
         protected void ExpectWarnings(Action action)
         {
             Assert.IsFalse(handlingWarnings);
@@ -108,17 +114,23 @@ namespace ArborTest
 
         public void DoCloneBehavior(CloneBehavior cloneBehavior, ref Arbor.Tree tree, ref Arbor.Blackboard globalBlackboard)
         {
+            object extra = null;
+            DoCloneBehavior(cloneBehavior, ref tree, ref globalBlackboard, ref extra);
+        }
+
+        public void DoCloneBehavior<T>(CloneBehavior cloneBehavior, ref Arbor.Tree tree, ref Arbor.Blackboard globalBlackboard, ref T extra)
+        {
             switch (cloneBehavior)
             {
                 case CloneBehavior.Nop:
                     break;
 
                 case CloneBehavior.Clone:
-                    (tree, globalBlackboard) = Dec.Recorder.Clone((tree, globalBlackboard));
+                    (tree, globalBlackboard, extra) = Dec.Recorder.Clone((tree, globalBlackboard, extra));
                     break;
 
                 case CloneBehavior.WriteRead:
-                    (tree, globalBlackboard) = Dec.Recorder.Read<(Arbor.Tree, Arbor.Blackboard)>(Dec.Recorder.Write((tree, globalBlackboard)));
+                    (tree, globalBlackboard, extra) = Dec.Recorder.Read<(Arbor.Tree, Arbor.Blackboard, T)>(Dec.Recorder.Write((tree, globalBlackboard, extra)));
                     break;
             }
         }

@@ -13,6 +13,7 @@ namespace Arbor
     public abstract partial class Node : Dec.IRecordable
     {
         private IEnumerator<Result> currentWorker;
+        internal Dictionary<Arbor.BaseEventDec, List<System.Delegate>> eventActions;
 
         internal void Init()
         {
@@ -23,6 +24,10 @@ namespace Arbor
         {
             var tree = Tree.Current.Value;
             tree.stack.Add(this);
+
+            // get it in the tree in the right order
+            int activeIndex = tree.active.Count;
+            tree.active.Add(this);
 
             bool moved;
             try
@@ -52,6 +57,8 @@ namespace Arbor
                 {
                     Dbg.Ex(e);
                 }
+
+                tree.active[activeIndex] = null; // nope, not active anymore
                 return Result.Failure;
             }
 
@@ -67,9 +74,26 @@ namespace Arbor
                 {
                     Dbg.Ex(e);
                 }
+                tree.active[activeIndex] = null; // nope, not active anymore
             }
 
             return result;
+        }
+
+        internal void EventAttach_Internal(Arbor.BaseEventDec eve, System.Delegate deleg)
+        {
+            if (eventActions == null)
+            {
+                eventActions = new Dictionary<Arbor.BaseEventDec, List<System.Delegate>>();
+            }
+
+            if (!eventActions.TryGetValue(eve, out var actions))
+            {
+                actions = new List<System.Delegate>();
+                eventActions[eve] = actions;
+            }
+
+            actions.Add(deleg);
         }
 
         public abstract IEnumerable<Result> Worker();
@@ -92,6 +116,7 @@ namespace Arbor
         public virtual void Record(Recorder recorder)
         {
             recorder.Record(ref currentWorker, nameof(currentWorker));
+            recorder.Record(ref eventActions, nameof(eventActions));
         }
     }
 }
