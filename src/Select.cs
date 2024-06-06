@@ -6,12 +6,12 @@ namespace Arbor
     public partial class Select : Node
     {
         private Select() { }  // exists just for Dec
-        public Select(List<Node> children)
+        public Select(params Node[] children)
         {
             m_children = children;
         }
 
-        private List<Node> m_children;
+        private Node[] m_children;
 
         [Dec.RecorderEnumerator.RecordableEnumerable]
         public override IEnumerable<Result> Worker()

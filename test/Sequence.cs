@@ -28,7 +28,7 @@ namespace ArborTest
             stage7_seen = 0;
 
             var blackboardGlobal = new Blackboard();
-            Arbor.Tree tree = new Arbor.Tree(new Arbor.Sequence(new List<Arbor.Node> {
+            Arbor.Tree tree = new Arbor.Tree(new Arbor.Sequence(
                 new Function(() =>
                 {
                     stage1_seen++;
@@ -51,8 +51,8 @@ namespace ArborTest
                 {
                     stage7_seen++;
                     return true;
-                }),
-            }), blackboardGlobal);
+                })
+            ), blackboardGlobal);
 
             DoCloneBehavior(cloneBehavior, ref tree, ref blackboardGlobal);
             tree.Update(blackboardGlobal);
