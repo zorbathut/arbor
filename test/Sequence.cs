@@ -29,25 +29,25 @@ namespace ArborTest
 
             var blackboardGlobal = new Blackboard();
             Arbor.Tree tree = new Arbor.Tree(new Arbor.Sequence(
-                new Function(() =>
+                new FunctionSimple(() =>
                 {
                     stage1_seen++;
                     return true;
                 }),
                 new ResultFunction(() => stage2_rf),
-                new Function(() =>
+                new FunctionSimple(() =>
                 {
                     stage3_seen++;
                     return true;
                 }),
                 new ResultFunction(() => stage4_rf),
-                new Function(() =>
+                new FunctionSimple(() =>
                 {
                     stage5_seen++;
                     return true;
                 }),
                 new ResultFunction(() => stage6_rf),
-                new Function(() =>
+                new FunctionSimple(() =>
                 {
                     stage7_seen++;
                     return true;
