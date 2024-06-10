@@ -3,12 +3,12 @@ using System.Collections.Generic;
 
 namespace Arbor
 {
-    public partial class Function : Node
+    public partial class FunctionSimple : Node
     {
         private Func<bool> condition;
 
-        private Function() { }  // exists just for Dec
-        public Function(Func<bool> condition)
+        private FunctionSimple() { }  // exists just for Dec
+        public FunctionSimple(Func<bool> condition)
         {
             this.condition = condition;
         }
