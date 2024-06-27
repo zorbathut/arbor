@@ -1,3 +1,4 @@
+
 namespace Arbor
 {
     using Microsoft.CodeAnalysis;
@@ -18,7 +19,6 @@ namespace Arbor
             var arborNodeType = context.Compilation.GetTypeByMetadataName("Arbor.Node");
             var arborBlackboardParameterType = context.Compilation.GetTypeByMetadataName("Arbor.BlackboardParameter`1");
             var listType = context.Compilation.GetTypeByMetadataName(typeof(List<>).FullName);
-            var arrayType = context.Compilation.GetTypeByMetadataName(typeof(System.Array).FullName);
 
             var fullyQualified = SymbolDisplayFormat.FullyQualifiedFormat.WithGlobalNamespaceStyle(SymbolDisplayGlobalNamespaceStyle.Omitted);
 
@@ -66,47 +66,58 @@ namespace Arbor
                 var resetFields = new System.Text.StringBuilder();
                 foreach (var bbp in type.GetMembers().OfType<IFieldSymbol>())
                 {
-                    if (!(bbp.Type is INamedTypeSymbol namedType))
+                    // Named types
+                    if (bbp.Type is INamedTypeSymbol namedType)
                     {
-                        continue;
-                    }
-
-                    // Check to see if this is a blackboard parameter
-                    if (SymbolEqualityComparer.Default.Equals(namedType.ConstructedFrom, arborBlackboardParameterType))
-                    {
-                        if (!bbp.Name.EndsWith("Id"))
+                        // Check to see if this is a blackboard parameter
+                        if (SymbolEqualityComparer.Default.Equals(namedType.ConstructedFrom,
+                                arborBlackboardParameterType))
                         {
-                            context.ReportDiagnostic(Diagnostic.Create(new DiagnosticDescriptor("a", "", "Blackboard parameters must have an `Id` suffix.", "", DiagnosticSeverity.Error, true), nowhereLocation));
+                            if (!bbp.Name.EndsWith("Id"))
+                            {
+                                context.ReportDiagnostic(Diagnostic.Create(
+                                    new DiagnosticDescriptor("a", "", "Blackboard parameters must have an `Id` suffix.",
+                                        "", DiagnosticSeverity.Error, true), nowhereLocation));
+                            }
+
+                            foundSomething = true;
+
+                            var typeString = namedType.TypeArguments[0].ToDisplayString(fullyQualified);
+                            source.AppendLine($"protected {typeString} {bbp.Name.RemoveSuffix("Id")} {{");
+                            source.AppendLine($"  get => {bbp.Name}.Get();");
+                            source.AppendLine($"  set => {bbp.Name}.Set(value);");
+                            source.AppendLine($"}}");
+
+                            initFields.AppendLine($"{bbp.Name}.Register();");
                         }
 
-                        foundSomething = true;
+                        // Check to see if this is derived from a Node
+                        if (namedType.InheritsFrom(arborNodeType))
+                        {
+                            foundSomething = true;
+                            initFields.AppendLine($"{bbp.Name}.Init();");
+                            resetFields.AppendLine($"{bbp.Name}.Reset();");
+                        }
 
-                        var typeString = namedType.TypeArguments[0].ToDisplayString(fullyQualified);
-                        source.AppendLine($"protected {typeString} {bbp.Name.RemoveSuffix("Id")} {{");
-                        source.AppendLine($"  get => {bbp.Name}.Get();");
-                        source.AppendLine($"  set => {bbp.Name}.Set(value);");
-                        source.AppendLine($"}}");
-
-                        initFields.AppendLine($"{bbp.Name}.Register();");
-                    }
-
-                    // Check to see if this is derived from a Node
-                    if (namedType.InheritsFrom(arborNodeType))
-                    {
-                        foundSomething = true;
-                        initFields.AppendLine($"{bbp.Name}.Init();");
-                        resetFields.AppendLine($"{bbp.Name}.Reset();");
-                    }
-
-
-                    var genericType = namedType.ConstructedFrom;
-                    if (
-                        SymbolEqualityComparer.Default.Equals(genericType.ConstructedFrom, listType) ||    // Check to see if this is a List<Node> or similar
-                        SymbolEqualityComparer.Default.Equals(namedType.ConstructedFrom, arrayType)       // Check to see if this is a Node[] or similar
+                        var genericType = namedType.ConstructedFrom;
+                        if (
+                            SymbolEqualityComparer.Default.Equals(genericType.ConstructedFrom,
+                                listType) // Check to see if this is a List<Node> or similar
                         )
+                        {
+                            var typeArgument = namedType.TypeArguments.FirstOrDefault();
+                            if (typeArgument.InheritsFrom(arborNodeType))
+                            {
+                                foundSomething = true;
+                                initFields.AppendLine($"foreach (var item in {bbp.Name}) item?.Init();");
+                                resetFields.AppendLine($"foreach (var item in {bbp.Name}) item?.Reset();");
+                            }
+                        }
+                    }
+                    else if (bbp.Type is IArrayTypeSymbol arrayType)
                     {
-                        var typeArgument = namedType.TypeArguments.FirstOrDefault();
-                        if (typeArgument.InheritsFrom(arborNodeType))
+                        // test to see if this is a Node[]
+                        if (arrayType.ElementType.InheritsFrom(arborNodeType))
                         {
                             foundSomething = true;
                             initFields.AppendLine($"foreach (var item in {bbp.Name}) item?.Init();");
