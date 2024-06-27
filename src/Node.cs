@@ -15,7 +15,7 @@ namespace Arbor
         private IEnumerator<Result> currentWorker;
         internal Dictionary<Arbor.BaseEventDec, List<System.Delegate>> eventActions;
 
-        internal void Init()
+        public void Init()
         {
             InitFields();
         }
