@@ -5,7 +5,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\generator\generator.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
+    <ProjectReference Include="..\arbor-generator\arbor-generator.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
     <ProjectReference Include="..\lib\dec\extra\recorder_enumerator\src\recorder_enumerator.csproj" />
     <ProjectReference Include="..\lib\dec\src\dec.csproj" />
   </ItemGroup>

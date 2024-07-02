@@ -7,7 +7,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "arbor", "src\arbor.csproj",
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "arbor-test", "test\arbor-test.csproj", "{DEBE65A3-0988-4442-9372-72C0E928A985}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "generator", "generator\generator.csproj", "{FEF58030-691E-4ABB-A717-F7E39DEA2908}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "arbor-generator", "arbor-generator\arbor-generator.csproj", "{FEF58030-691E-4ABB-A717-F7E39DEA2908}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "dec", "lib\dec\src\dec.csproj", "{6EEAB672-3F3C-4B65-85F3-A38448FAE9BF}"
 EndProject
