@@ -63,7 +63,7 @@ namespace Arbor
                 }
 
                 var initFields = new System.Text.StringBuilder();
-                var resetFields = new System.Text.StringBuilder();
+                var unrollFields = new System.Text.StringBuilder();
                 foreach (var bbp in type.GetMembers().OfType<IFieldSymbol>())
                 {
                     // Named types
@@ -96,7 +96,7 @@ namespace Arbor
                         {
                             foundSomething = true;
                             initFields.AppendLine($"{bbp.Name}.Init();");
-                            resetFields.AppendLine($"{bbp.Name}.Reset();");
+                            unrollFields.AppendLine($"childLinks.Add({bbp.Name}.UnrollTo(tree));");
                         }
 
                         var genericType = namedType.ConstructedFrom;
@@ -110,7 +110,7 @@ namespace Arbor
                             {
                                 foundSomething = true;
                                 initFields.AppendLine($"foreach (var item in {bbp.Name}) item?.Init();");
-                                resetFields.AppendLine($"foreach (var item in {bbp.Name}) item?.Reset();");
+                                unrollFields.AppendLine($"foreach (var item in {bbp.Name}) if (item != null) childLinks.Add(item.UnrollTo(tree));");
                             }
                         }
                     }
@@ -121,7 +121,7 @@ namespace Arbor
                         {
                             foundSomething = true;
                             initFields.AppendLine($"foreach (var item in {bbp.Name}) item?.Init();");
-                            resetFields.AppendLine($"foreach (var item in {bbp.Name}) item?.Reset();");
+                            unrollFields.AppendLine($"foreach (var item in {bbp.Name}) if (item != null) childLinks.Add(item.UnrollTo(tree));");
                         }
                     }
                 }
@@ -131,9 +131,10 @@ namespace Arbor
                 source.AppendLine(initFields.ToString());
                 source.AppendLine($"}}");
 
-                source.AppendLine($"public override void ResetFields() {{");
-                source.AppendLine($"  base.ResetFields();");
-                source.AppendLine(resetFields.ToString());
+                source.AppendLine($"public override int UnrollTo(Arbor.Tree tree) {{");
+                source.AppendLine($"  int index = base.UnrollTo(tree);");
+                source.AppendLine(unrollFields.ToString());
+                source.AppendLine($"  return index;");
                 source.AppendLine($"}}");
 
                 foreach (var typeHierarchy in typeNesting)

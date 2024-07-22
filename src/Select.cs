@@ -20,7 +20,7 @@ namespace Arbor
             {
                 while (true)
                 {
-                    var result = child.Update();
+                    var result = TreeExecution.Update(child);
                     if (result == Result.Failure)
                     {
                         // whoops! abort this, hide the failure, try another one

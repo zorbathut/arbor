@@ -26,7 +26,10 @@ namespace Arbor
             }
         }
 
-        private Node root;
+        // node 0 is our root
+        internal List<Node> nodes;
+        internal List<IEnumerator<Result>> workers;
+
         private Dictionary<string, Blackboard> blackboards = new Dictionary<string, Blackboard>();
 
         // refreshed on every update; used for event triggers
@@ -40,7 +43,10 @@ namespace Arbor
         private Tree() { }  // exists just for Dec
         public Tree(Node root, Blackboard global)
         {
-            this.root = root;
+            nodes = new List<Node>();
+            workers = new List<IEnumerator<Result>>();
+
+            root.UnrollTo(this);
 
             blackboards["tree"] = new Blackboard();
             active = new List<Node>();
@@ -54,10 +60,24 @@ namespace Arbor
         public void Update(Blackboard global)
         {
             active.Clear();
-            using (new Scope(this, global))
+
+            if (nodes.Count > 0)
             {
-                root?.Update();
+                using (new Scope(this, global))
+                {
+                    TreeExecution.Update(nodes[0]);
+                }
             }
+        }
+
+        internal int RegisterUnrollNode(Node node)
+        {
+            int index = nodes.Count;
+
+            nodes.Add(node);
+            workers.Add(null);
+
+            return index;
         }
 
         public void EventInvoke(Blackboard global, EventDec ev)
@@ -105,7 +125,8 @@ namespace Arbor
 
         public void Reset()
         {
-            root.Reset();
+            using var scope = new Scope(this, null);
+            TreeExecution.Terminate(nodes[0]);
         }
 
         public Blackboard Blackboard(string id)
@@ -130,7 +151,8 @@ namespace Arbor
 
         public void Record(Dec.Recorder recorder)
         {
-            recorder.Shared().Record(ref root, nameof(root));
+            recorder.Shared().Record(ref nodes, nameof(nodes));
+            recorder.Shared().Record(ref workers, nameof(workers));
             recorder.Shared().Record(ref active, nameof(active));
             recorder.Record(ref blackboards, nameof(blackboards));
         }
