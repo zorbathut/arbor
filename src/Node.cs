@@ -14,6 +14,7 @@ namespace Arbor
     {
         private IEnumerator<Result> currentWorker;
         internal Dictionary<Arbor.BaseEventDec, List<System.Delegate>> eventActions;
+        internal Dictionary<Arbor.BasePropertyDec, object> properties;
 
         public void Init()
         {
@@ -96,6 +97,16 @@ namespace Arbor
             actions.Add(deleg);
         }
 
+        internal void PropertyAttach_Internal(Arbor.BasePropertyDec eve, object data)
+        {
+            if (properties == null)
+            {
+                properties = new Dictionary<Arbor.BasePropertyDec, object>();
+            }
+
+            properties[eve] = data;
+        }
+
         public abstract IEnumerable<Result> Worker();
 
         public virtual void Reset()
@@ -117,6 +128,7 @@ namespace Arbor
         {
             recorder.Record(ref currentWorker, nameof(currentWorker));
             recorder.Record(ref eventActions, nameof(eventActions));
+            recorder.Record(ref properties, nameof(properties));
         }
     }
 }

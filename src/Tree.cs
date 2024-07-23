@@ -103,6 +103,20 @@ namespace Arbor
             }
         }
 
+        public T PropertyGet<T>(PropertyDec<T> prop)
+        {
+            // go through active nodes in reverse order
+            for (int i = active.Count - 1; i >= 0; i--)
+            {
+                if (active[i]?.properties?.TryGetValue(prop, out var value) ?? false)
+                {
+                    return (T)value;
+                }
+            }
+
+            return default;
+        }
+
         public void Reset()
         {
             root.Reset();
