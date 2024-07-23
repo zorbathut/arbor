@@ -34,22 +34,22 @@ namespace Arbor
 
         public T Get()
         {
-            return Arbor.Tree.Current.Value.BlackboardGet<T>(identifier);
+            return Arbor.TreeInstance.Current.Value.BlackboardGet<T>(identifier);
         }
 
         public void Set(T value)
         {
-            Arbor.Tree.Current.Value.BlackboardSet<T>(identifier, value);
+            Arbor.TreeInstance.Current.Value.BlackboardSet<T>(identifier, value);
         }
 
         public void Register()
         {
-            Arbor.Tree.Current.Value.Register<T>(identifier);
+            Arbor.TreeInstance.Current.Value.Register<T>(identifier);
         }
 
-        public void RegisterWith(Tree tree)
+        public void RegisterWith(TreeInstance treeInstance)
         {
-            tree.Register<T>(identifier);
+            treeInstance.Register<T>(identifier);
         }
 
         public void Record(Dec.Recorder recorder)

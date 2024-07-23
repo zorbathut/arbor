@@ -69,23 +69,23 @@ namespace ArborTest
             var payload = new Payload();
 
             var blackboardGlobal = new Blackboard();
-            Arbor.Tree tree = new Arbor.Tree(new IdleNode()
+            Arbor.TreeInstance treeInstance = new Arbor.TreeInstance(CreateDec(new IdleNode()
                 .EventAttach(EventDecs.ZeroParameter, () => payload.seen0++)
                 .EventAttach(EventDecs.OneParameter, (int a) => payload.seen1 += a)
                 .EventAttach(EventDecs.TwoParameter, (int a, int b) => payload.seen2 += a + b)
                 .EventAttach(EventDecs.ThreeParameter, (int a, int b, int c) => payload.seen3 += a + b + c)
                 .EventAttach(EventDecs.FourParameter, (int a, int b, int c, int d) => payload.seen4 += a + b + c + d)
 
-                , blackboardGlobal);
+                ), blackboardGlobal);
 
             // first-frame events get ignored because nothing has run
-            tree.Update(blackboardGlobal);
+            treeInstance.Update(blackboardGlobal);
 
-            tree.EventInvoke(blackboardGlobal, EventDecs.ZeroParameter);
-            tree.EventInvoke(blackboardGlobal, EventDecs.OneParameter, 1);
-            tree.EventInvoke(blackboardGlobal, EventDecs.TwoParameter, 2, 3);
-            tree.EventInvoke(blackboardGlobal, EventDecs.ThreeParameter, 4, 5, 6);
-            tree.EventInvoke(blackboardGlobal, EventDecs.FourParameter, 7, 8, 9, 10);
+            treeInstance.EventInvoke(blackboardGlobal, EventDecs.ZeroParameter);
+            treeInstance.EventInvoke(blackboardGlobal, EventDecs.OneParameter, 1);
+            treeInstance.EventInvoke(blackboardGlobal, EventDecs.TwoParameter, 2, 3);
+            treeInstance.EventInvoke(blackboardGlobal, EventDecs.ThreeParameter, 4, 5, 6);
+            treeInstance.EventInvoke(blackboardGlobal, EventDecs.FourParameter, 7, 8, 9, 10);
 
             Assert.AreEqual(1, payload.seen0);
             Assert.AreEqual(1, payload.seen1);
@@ -93,13 +93,13 @@ namespace ArborTest
             Assert.AreEqual(15, payload.seen3);
             Assert.AreEqual(34, payload.seen4);
 
-            DoCloneBehavior(cloneBehavior, ref tree, ref blackboardGlobal, ref payload);
+            DoCloneBehavior(cloneBehavior, ref treeInstance, ref blackboardGlobal, ref payload);
 
-            tree.EventInvoke(blackboardGlobal, EventDecs.ZeroParameter);
-            tree.EventInvoke(blackboardGlobal, EventDecs.OneParameter, 11);
-            tree.EventInvoke(blackboardGlobal, EventDecs.TwoParameter, 12, 13);
-            tree.EventInvoke(blackboardGlobal, EventDecs.ThreeParameter, 14, 15, 16);
-            tree.EventInvoke(blackboardGlobal, EventDecs.FourParameter, 17, 18, 19, 20);
+            treeInstance.EventInvoke(blackboardGlobal, EventDecs.ZeroParameter);
+            treeInstance.EventInvoke(blackboardGlobal, EventDecs.OneParameter, 11);
+            treeInstance.EventInvoke(blackboardGlobal, EventDecs.TwoParameter, 12, 13);
+            treeInstance.EventInvoke(blackboardGlobal, EventDecs.ThreeParameter, 14, 15, 16);
+            treeInstance.EventInvoke(blackboardGlobal, EventDecs.FourParameter, 17, 18, 19, 20);
 
             Assert.AreEqual(2, payload.seen0);
             Assert.AreEqual(12, payload.seen1);

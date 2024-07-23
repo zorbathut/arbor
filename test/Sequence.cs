@@ -28,7 +28,7 @@ namespace ArborTest
             stage7_seen = 0;
 
             var blackboardGlobal = new Blackboard();
-            Arbor.Tree tree = new Arbor.Tree(new Arbor.Sequence(
+            Arbor.TreeInstance treeInstance = new Arbor.TreeInstance(CreateDec(new Arbor.Sequence(
                 new FunctionSimple(() =>
                 {
                     stage1_seen++;
@@ -52,61 +52,61 @@ namespace ArborTest
                     stage7_seen++;
                     return true;
                 })
-            ), blackboardGlobal);
+            )), blackboardGlobal);
 
-            DoCloneBehavior(cloneBehavior, ref tree, ref blackboardGlobal);
-            tree.Update(blackboardGlobal);
-
-            Assert.AreEqual(1, stage1_seen);
-            Assert.AreEqual(0, stage3_seen);
-            Assert.AreEqual(0, stage5_seen);
-            Assert.AreEqual(0, stage7_seen);
-
-            DoCloneBehavior(cloneBehavior, ref tree, ref blackboardGlobal);
-            tree.Update(blackboardGlobal);
+            DoCloneBehavior(cloneBehavior, ref treeInstance, ref blackboardGlobal);
+            treeInstance.Update(blackboardGlobal);
 
             Assert.AreEqual(1, stage1_seen);
             Assert.AreEqual(0, stage3_seen);
             Assert.AreEqual(0, stage5_seen);
             Assert.AreEqual(0, stage7_seen);
 
-            DoCloneBehavior(cloneBehavior, ref tree, ref blackboardGlobal);
+            DoCloneBehavior(cloneBehavior, ref treeInstance, ref blackboardGlobal);
+            treeInstance.Update(blackboardGlobal);
+
+            Assert.AreEqual(1, stage1_seen);
+            Assert.AreEqual(0, stage3_seen);
+            Assert.AreEqual(0, stage5_seen);
+            Assert.AreEqual(0, stage7_seen);
+
+            DoCloneBehavior(cloneBehavior, ref treeInstance, ref blackboardGlobal);
             stage2_rf = Result.Success;
-            tree.Update(blackboardGlobal);
+            treeInstance.Update(blackboardGlobal);
 
             Assert.AreEqual(1, stage1_seen);
             Assert.AreEqual(1, stage3_seen);
             Assert.AreEqual(0, stage5_seen);
             Assert.AreEqual(0, stage7_seen);
 
-            DoCloneBehavior(cloneBehavior, ref tree, ref blackboardGlobal);
+            DoCloneBehavior(cloneBehavior, ref treeInstance, ref blackboardGlobal);
             stage4_rf = Result.Failure;
-            tree.Update(blackboardGlobal);
+            treeInstance.Update(blackboardGlobal);
 
             Assert.AreEqual(1, stage1_seen);
             Assert.AreEqual(1, stage3_seen);
             Assert.AreEqual(0, stage5_seen);
             Assert.AreEqual(0, stage7_seen);
 
-            DoCloneBehavior(cloneBehavior, ref tree, ref blackboardGlobal);
-            tree.Update(blackboardGlobal);
+            DoCloneBehavior(cloneBehavior, ref treeInstance, ref blackboardGlobal);
+            treeInstance.Update(blackboardGlobal);
 
             Assert.AreEqual(2, stage1_seen);
             Assert.AreEqual(2, stage3_seen);
             Assert.AreEqual(0, stage5_seen);
             Assert.AreEqual(0, stage7_seen);
 
-            DoCloneBehavior(cloneBehavior, ref tree, ref blackboardGlobal);
+            DoCloneBehavior(cloneBehavior, ref treeInstance, ref blackboardGlobal);
             stage4_rf = Result.Success;
             stage6_rf = Result.Success;
-            tree.Update(blackboardGlobal);
+            treeInstance.Update(blackboardGlobal);
 
             Assert.AreEqual(3, stage1_seen);
             Assert.AreEqual(3, stage3_seen);
             Assert.AreEqual(1, stage5_seen);
             Assert.AreEqual(1, stage7_seen);
 
-            DoCloneBehavior(cloneBehavior, ref tree, ref blackboardGlobal);
+            DoCloneBehavior(cloneBehavior, ref treeInstance, ref blackboardGlobal);
         }
     }
 }

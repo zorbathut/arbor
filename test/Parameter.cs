@@ -27,17 +27,17 @@ namespace ArborTest
         public void Basic()
         {
             var blackboardGlobal = new Blackboard();
-            Arbor.Tree tree = new Arbor.Tree(new ParameterTestNode() {
+            Arbor.TreeInstance treeInstance = new Arbor.TreeInstance(CreateDec(new ParameterTestNode() {
                 ReadId = Arbor.BlackboardParameter<string>.Global("read"),
                 WriteId = Arbor.BlackboardParameter<string>.Global("write"),
-            }, blackboardGlobal);
+            }), blackboardGlobal);
 
             blackboardGlobal.Set<string>("read", "hello");
             blackboardGlobal.Set<string>("write", "goodbye");
 
             Assert.AreEqual("goodbye", blackboardGlobal.Get<string>("write"));
 
-            tree.Update(blackboardGlobal);
+            treeInstance.Update(blackboardGlobal);
 
             Assert.AreEqual("hello", blackboardGlobal.Get<string>("write"));
         }
@@ -78,8 +78,8 @@ namespace ArborTest
         public void RegistrationFailure()
         {
             var blackboardGlobal = new Blackboard();
-            Arbor.Tree tree = new Arbor.Tree(new ListChild(
-            ), blackboardGlobal);
+            Arbor.TreeInstance treeInstance = new Arbor.TreeInstance(CreateDec(new ListChild(
+            )), blackboardGlobal);
 
             ExpectErrors(() => blackboardGlobal.Set<string>("read", "hello"));
         }
@@ -88,12 +88,12 @@ namespace ArborTest
         public void RegistrationList()
         {
             var blackboardGlobal = new Blackboard();
-            Arbor.Tree tree = new Arbor.Tree(new ListChild(
+            Arbor.TreeInstance treeInstance = new Arbor.TreeInstance(CreateDec(new ListChild(
                 new ParameterTestNode() {
                     ReadId = Arbor.BlackboardParameter<string>.Global("read"),
                     WriteId = Arbor.BlackboardParameter<string>.Global("write"),
                 }
-            ), blackboardGlobal);
+            )), blackboardGlobal);
 
             blackboardGlobal.Set<string>("read", "hello");
         }
@@ -102,12 +102,12 @@ namespace ArborTest
         public void RegistrationArray()
         {
             var blackboardGlobal = new Blackboard();
-            Arbor.Tree tree = new Arbor.Tree(new ArrayChild(
+            Arbor.TreeInstance treeInstance = new Arbor.TreeInstance(CreateDec(new ArrayChild(
                 new ParameterTestNode() {
                     ReadId = Arbor.BlackboardParameter<string>.Global("read"),
                     WriteId = Arbor.BlackboardParameter<string>.Global("write"),
                 }
-            ), blackboardGlobal);
+            )), blackboardGlobal);
 
             blackboardGlobal.Set<string>("read", "hello");
         }

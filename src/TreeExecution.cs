@@ -4,14 +4,13 @@ namespace Arbor
     {
         public static Result Update(Node node)
         {
-            var tree = Tree.Current.Value;
-            tree.stack.Add(node);
+            var tree = TreeInstance.Current.Value;
 
             // get it in the tree in the right order
             int activeIndex = tree.active.Count;
             tree.active.Add(node);
 
-            int treeIndex = tree.nodes.IndexOf(node);
+            int treeIndex = tree.treeDec.nodes.IndexOf(node);
 
             bool moved;
             try
@@ -28,7 +27,6 @@ namespace Arbor
                 Dbg.Ex(e);
                 moved = false;
             }
-            tree.stack.RemoveAt(tree.stack.Count - 1);
 
             if (!moved)
             {
@@ -64,15 +62,14 @@ namespace Arbor
             return result;
         }
 
-        // this is the wrong place for this
         public static void Terminate(Node node)
         {
-            Terminate(Tree.Current.Value.nodes.IndexOf(node));
+            Terminate(TreeInstance.Current.Value.treeDec.nodes.IndexOf(node));
         }
 
         internal static void Terminate(int index)
         {
-            var tree = Tree.Current.Value;
+            var tree = TreeInstance.Current.Value;
 
             if (tree.workers[index] == null)
             {
@@ -82,7 +79,7 @@ namespace Arbor
             tree.workers[index].Dispose();
             tree.workers[index] = null;
 
-            foreach (var childIndex in tree.nodes[index].childLinks)
+            foreach (var childIndex in tree.treeDec.nodes[index].childLinks)
             {
                 Terminate(childIndex);
             }

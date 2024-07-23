@@ -15,10 +15,7 @@ namespace Arbor
         public List<int> childLinks = new List<int>();
         internal Dictionary<Arbor.BaseEventDec, List<System.Delegate>> eventActions;
 
-        public void Init()
-        {
-            InitFields();
-        }
+        public virtual void Init() { }
 
         internal void EventAttach_Internal(Arbor.BaseEventDec eve, System.Delegate deleg)
         {
@@ -38,11 +35,9 @@ namespace Arbor
 
         public abstract IEnumerable<Result> Worker();
 
-        public virtual void InitFields() { }
-
-        public virtual int UnrollTo(Tree tree)
+        public virtual int UnrollTo(TreeDec treeDec)
         {
-            return tree.RegisterUnrollNode(this);
+            return treeDec.RegisterUnrollNode(this);
         }
 
         public virtual void Record(Recorder recorder)

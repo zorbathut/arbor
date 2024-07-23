@@ -77,6 +77,14 @@ namespace ArborTest
             typeof(Dec.Config).GetField("TestParameters", BindingFlags.NonPublic | BindingFlags.Static).SetValue(null, parameters);
         }
 
+        public Arbor.TreeDec CreateDec(Arbor.Node node)
+        {
+            var tree = Dec.Database.Create<Arbor.TreeDec>("Test");
+            tree.root = node;
+            tree.PostLoad(Arbor.Config.ErrorHandler);
+            return tree;
+        }
+
         protected void ExpectWarnings(Action action)
         {
             Assert.IsFalse(handlingWarnings);
@@ -112,13 +120,13 @@ namespace ArborTest
             WriteRead,
         }
 
-        public void DoCloneBehavior(CloneBehavior cloneBehavior, ref Arbor.Tree tree, ref Arbor.Blackboard globalBlackboard)
+        public void DoCloneBehavior(CloneBehavior cloneBehavior, ref Arbor.TreeInstance treeInstance, ref Arbor.Blackboard globalBlackboard)
         {
             object extra = null;
-            DoCloneBehavior(cloneBehavior, ref tree, ref globalBlackboard, ref extra);
+            DoCloneBehavior(cloneBehavior, ref treeInstance, ref globalBlackboard, ref extra);
         }
 
-        public void DoCloneBehavior<T>(CloneBehavior cloneBehavior, ref Arbor.Tree tree, ref Arbor.Blackboard globalBlackboard, ref T extra)
+        public void DoCloneBehavior<T>(CloneBehavior cloneBehavior, ref Arbor.TreeInstance treeInstance, ref Arbor.Blackboard globalBlackboard, ref T extra)
         {
             switch (cloneBehavior)
             {
@@ -126,11 +134,11 @@ namespace ArborTest
                     break;
 
                 case CloneBehavior.Clone:
-                    (tree, globalBlackboard, extra) = Dec.Recorder.Clone((tree, globalBlackboard, extra));
+                    (treeInstance, globalBlackboard, extra) = Dec.Recorder.Clone((tree: treeInstance, globalBlackboard, extra));
                     break;
 
                 case CloneBehavior.WriteRead:
-                    (tree, globalBlackboard, extra) = Dec.Recorder.Read<(Arbor.Tree, Arbor.Blackboard, T)>(Dec.Recorder.Write((tree, globalBlackboard, extra)));
+                    (treeInstance, globalBlackboard, extra) = Dec.Recorder.Read<(Arbor.TreeInstance, Arbor.Blackboard, T)>(Dec.Recorder.Write((tree: treeInstance, globalBlackboard, extra)));
                     break;
             }
         }

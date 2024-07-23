@@ -95,7 +95,6 @@ namespace Arbor
                         if (namedType.InheritsFrom(arborNodeType))
                         {
                             foundSomething = true;
-                            initFields.AppendLine($"{bbp.Name}.Init();");
                             unrollFields.AppendLine($"childLinks.Add({bbp.Name}.UnrollTo(tree));");
                         }
 
@@ -109,7 +108,6 @@ namespace Arbor
                             if (typeArgument.InheritsFrom(arborNodeType))
                             {
                                 foundSomething = true;
-                                initFields.AppendLine($"foreach (var item in {bbp.Name}) item?.Init();");
                                 unrollFields.AppendLine($"foreach (var item in {bbp.Name}) if (item != null) childLinks.Add(item.UnrollTo(tree));");
                             }
                         }
@@ -120,18 +118,17 @@ namespace Arbor
                         if (arrayType.ElementType.InheritsFrom(arborNodeType))
                         {
                             foundSomething = true;
-                            initFields.AppendLine($"foreach (var item in {bbp.Name}) item?.Init();");
                             unrollFields.AppendLine($"foreach (var item in {bbp.Name}) if (item != null) childLinks.Add(item.UnrollTo(tree));");
                         }
                     }
                 }
 
-                source.AppendLine($"public override void InitFields() {{");
-                source.AppendLine($"  base.InitFields();");
+                source.AppendLine($"public override void Init() {{");
+                source.AppendLine($"  base.Init();");
                 source.AppendLine(initFields.ToString());
                 source.AppendLine($"}}");
 
-                source.AppendLine($"public override int UnrollTo(Arbor.Tree tree) {{");
+                source.AppendLine($"public override int UnrollTo(Arbor.TreeDec tree) {{");
                 source.AppendLine($"  int index = base.UnrollTo(tree);");
                 source.AppendLine(unrollFields.ToString());
                 source.AppendLine($"  return index;");

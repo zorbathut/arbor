@@ -3,17 +3,17 @@ using System.Collections.Generic;
 
 namespace Arbor
 {
-    public class Tree : Dec.IRecordable
+    public class TreeInstance : Dec.IRecordable
     {
-        public static System.Threading.ThreadLocal<Tree> Current = new();
+        public static System.Threading.ThreadLocal<TreeInstance> Current = new();
         private struct Scope : System.IDisposable
         {
-            private Tree old;
-            private Tree current;
-            public Scope(Tree tree, Blackboard global)
+            private TreeInstance old;
+            private TreeInstance current;
+            public Scope(TreeInstance treeInstance, Blackboard global)
             {
                 old = Current.Value;
-                current = tree;
+                current = treeInstance;
                 Current.Value = current;
                 current.blackboards["global"] = global;
             }
@@ -26,8 +26,7 @@ namespace Arbor
             }
         }
 
-        // node 0 is our root
-        internal List<Node> nodes;
+        public TreeDec treeDec;
         internal List<IEnumerator<Result>> workers;
 
         private Dictionary<string, Blackboard> blackboards = new Dictionary<string, Blackboard>();
@@ -37,23 +36,28 @@ namespace Arbor
         // (it shouldn't, in theory, but we have no way to specify "members are shared but the object isn't")
         internal List<Node> active;
 
-        // ephemeral
-        internal List<Node> stack = new List<Node>();
-
-        private Tree() { }  // exists just for Dec
-        public Tree(Node root, Blackboard global)
+        private TreeInstance() { }  // exists just for Dec
+        public TreeInstance(TreeDec treeDec, Blackboard global)
         {
-            nodes = new List<Node>();
-            workers = new List<IEnumerator<Result>>();
+            this.treeDec = treeDec;
 
-            root.UnrollTo(this);
+            // preallocate worker space
+            workers = new List<IEnumerator<Result>>(treeDec.nodes.Count);
+            for (int i = 0; i < treeDec.nodes.Count; i++)
+            {
+                workers.Add(null);
+            }
 
             blackboards["tree"] = new Blackboard();
             active = new List<Node>();
 
+            // go through the tree items and mark up the blackboards
             using (new Scope(this, global))
             {
-                root?.Init();
+                for (int i = 0; i < treeDec.nodes.Count; ++i)
+                {
+                    treeDec.nodes[i].Init();
+                }
             }
         }
 
@@ -61,23 +65,13 @@ namespace Arbor
         {
             active.Clear();
 
-            if (nodes.Count > 0)
+            if (treeDec.nodes.Count > 0)
             {
                 using (new Scope(this, global))
                 {
-                    TreeExecution.Update(nodes[0]);
+                    TreeExecution.Update(treeDec.nodes[0]);
                 }
             }
-        }
-
-        internal int RegisterUnrollNode(Node node)
-        {
-            int index = nodes.Count;
-
-            nodes.Add(node);
-            workers.Add(null);
-
-            return index;
         }
 
         public void EventInvoke(Blackboard global, EventDec ev)
@@ -126,7 +120,9 @@ namespace Arbor
         public void Reset()
         {
             using var scope = new Scope(this, null);
-            TreeExecution.Terminate(nodes[0]);
+
+            // always start at zero
+            TreeExecution.Terminate(0);
         }
 
         public Blackboard Blackboard(string id)
@@ -151,7 +147,7 @@ namespace Arbor
 
         public void Record(Dec.Recorder recorder)
         {
-            recorder.Shared().Record(ref nodes, nameof(nodes));
+            recorder.Record(ref treeDec, nameof(treeDec));
             recorder.Shared().Record(ref workers, nameof(workers));
             recorder.Shared().Record(ref active, nameof(active));
             recorder.Record(ref blackboards, nameof(blackboards));
