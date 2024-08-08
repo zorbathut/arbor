@@ -13,11 +13,9 @@ namespace Arbor
         }
     }
 
-    public class BlackboardParameter<T> : Dec.IRecordable
+    public struct BlackboardParameter<T> : Dec.IRecordable
     {
         BlackboardIdentifier identifier;
-
-        internal BlackboardParameter() { }
 
         public static BlackboardParameter<T> Tree(string id)
         {
