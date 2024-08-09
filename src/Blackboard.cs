@@ -31,7 +31,7 @@ namespace Arbor
         {
             if (!types.ContainsKey(id))
             {
-                Dbg.Err($"Missing item `{id}` when trying to get blackboard info");
+                Dbg.Err($"Parameter `{id}` is not a known blackboard parameter; when building the tree, either include it as part of an Arbor.Node or register it with `BlackboardParameter<>.RegisterWith()`");
                 return default;
             }
 
@@ -54,7 +54,7 @@ namespace Arbor
         {
             if (!types.ContainsKey(id))
             {
-                Dbg.Err($"Missing item `{id}` when trying to set blackboard info");
+                Dbg.Err($"Parameter `{id}` is not a known blackboard parameter; when building the tree, either include it as part of an Arbor.Node or register it with `BlackboardParameter<>.RegisterWith()`");
                 return;
             }
 
