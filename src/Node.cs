@@ -16,13 +16,27 @@ namespace Arbor
         internal Dictionary<Arbor.BaseEventDec, List<System.Delegate>> eventActions;
         internal Dictionary<Arbor.BasePropertyDec, object> properties;
 
+        private bool initted;
+
         public void Init()
         {
+            if (initted)
+            {
+                Dbg.Err("Initted multiple times");
+            }
+
             InitFields();
+
+            initted = true;
         }
 
         public Result Update()
         {
+            if (!initted)
+            {
+                Dbg.Err("Not initted");
+            }
+
             var tree = Tree.Current.Value;
             tree.stack.Add(this);
 
@@ -129,6 +143,12 @@ namespace Arbor
             recorder.Record(ref currentWorker, nameof(currentWorker));
             recorder.Record(ref eventActions, nameof(eventActions));
             recorder.Record(ref properties, nameof(properties));
+
+            if (recorder.Mode == Recorder.Direction.Read)
+            {
+                // we actually just mark this as initted in the hopes that the behavior tree is set up properly; this all needs to vanish when we kill serializable behavior trees
+                initted = true;
+            }
         }
     }
 }
