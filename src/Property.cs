@@ -1,7 +1,5 @@
 namespace Arbor;
 
-using System;
-
 public class BasePropertyDec : Dec.Dec
 {
 
