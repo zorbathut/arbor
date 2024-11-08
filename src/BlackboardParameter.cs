@@ -3,12 +3,10 @@ namespace Arbor
 {
     internal struct BlackboardIdentifier : Dec.IRecordable
     {
-        public string bb;
         public string id;
 
         public void Record(Dec.Recorder recorder)
         {
-            recorder.Record(ref bb, nameof(bb));
             recorder.Record(ref id, nameof(id));
         }
     }
@@ -19,15 +17,7 @@ namespace Arbor
 
         public static BlackboardParameter<T> Tree(string id)
         {
-            return new BlackboardParameter<T> { identifier = new BlackboardIdentifier{ bb = "tree", id = id } };
-        }
-        public static BlackboardParameter<T> Global(string id)
-        {
-            return new BlackboardParameter<T> { identifier = new BlackboardIdentifier { bb = "global", id = id } };
-        }
-        public static BlackboardParameter<T> Specific(string bbid, string itemid)
-        {
-            return new BlackboardParameter<T> { identifier = new BlackboardIdentifier { bb = bbid, id = itemid } };
+            return new BlackboardParameter<T> { identifier = new BlackboardIdentifier{ id = id } };
         }
 
         public T Get()

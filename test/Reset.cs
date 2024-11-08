@@ -22,44 +22,43 @@ namespace ArborTest
         [Test]
         public void Basic([Values] CloneBehavior cloneBehavior)
         {
-            var blackboardGlobal = new Blackboard();
             var tree = new Arbor.Tree(new Arbor.Sequence(
                 new IncrementNode(),
                 new WaitNode(),
                 new IncrementNode()
-            ), blackboardGlobal);
+            ));
 
             IncrementNode.IncrementValue = 0;
             Assert.AreEqual(0, IncrementNode.IncrementValue);
 
-            DoCloneBehavior(cloneBehavior, ref tree, ref blackboardGlobal);
+            DoCloneBehavior(cloneBehavior, ref tree);
 
-            tree.Update(blackboardGlobal);
+            tree.Update();
             Assert.AreEqual(1, IncrementNode.IncrementValue);
 
-            DoCloneBehavior(cloneBehavior, ref tree, ref blackboardGlobal);
+            DoCloneBehavior(cloneBehavior, ref tree);
 
-            tree.Update(blackboardGlobal);
+            tree.Update();
             Assert.AreEqual(1, IncrementNode.IncrementValue);
 
-            DoCloneBehavior(cloneBehavior, ref tree, ref blackboardGlobal);
+            DoCloneBehavior(cloneBehavior, ref tree);
 
-            tree.Update(blackboardGlobal);
+            tree.Update();
             Assert.AreEqual(1, IncrementNode.IncrementValue);
 
-            DoCloneBehavior(cloneBehavior, ref tree, ref blackboardGlobal);
+            DoCloneBehavior(cloneBehavior, ref tree);
 
             tree.Reset();
             Assert.AreEqual(1, IncrementNode.IncrementValue);
 
-            DoCloneBehavior(cloneBehavior, ref tree, ref blackboardGlobal);
+            DoCloneBehavior(cloneBehavior, ref tree);
 
-            tree.Update(blackboardGlobal);
+            tree.Update();
             Assert.AreEqual(2, IncrementNode.IncrementValue);
 
-            DoCloneBehavior(cloneBehavior, ref tree, ref blackboardGlobal);
+            DoCloneBehavior(cloneBehavior, ref tree);
 
-            tree.Update(blackboardGlobal);
+            tree.Update();
             Assert.AreEqual(2, IncrementNode.IncrementValue);
         }
     }

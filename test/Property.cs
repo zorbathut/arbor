@@ -43,20 +43,18 @@ namespace ArborTest
             ");
             parser.Finish();
 
-            var blackboardGlobal = new Blackboard();
             Arbor.Tree tree = new Arbor.Tree(new PropertyTestNode()
                 .PropertyAttach(PropertyDecs.IntProperty, 42)
                 .PropertyAttach(PropertyDecs.StringProperty, "Hello")
-                .PropertyAttach(PropertyDecs.BoolProperty, true)
-            , blackboardGlobal);
+                .PropertyAttach(PropertyDecs.BoolProperty, true));
 
             Assert.AreEqual(0, tree.PropertyGet(PropertyDecs.IntProperty));
             Assert.AreEqual(null, tree.PropertyGet(PropertyDecs.StringProperty));
             Assert.AreEqual(false, tree.PropertyGet(PropertyDecs.BoolProperty));
 
-            tree.Update(blackboardGlobal);
+            tree.Update();
 
-            DoCloneBehavior(cloneBehavior, ref tree, ref blackboardGlobal);
+            DoCloneBehavior(cloneBehavior, ref tree);
 
             Assert.AreEqual(42, tree.PropertyGet(PropertyDecs.IntProperty));
             Assert.AreEqual("Hello", tree.PropertyGet(PropertyDecs.StringProperty));
@@ -78,28 +76,27 @@ namespace ArborTest
             ");
             parser.Finish();
 
-            var blackboardGlobal = new Blackboard();
             Arbor.Tree tree = new Arbor.Tree(new Arbor.Sequence(
                 new PropertyTestNode()
                     .PropertyAttach(PropertyDecs.IntProperty, 10),
                 new PropertyTestNode()
                     .PropertyAttach(PropertyDecs.IntProperty, 20),
                 new PropertyTestNode()
-            ), blackboardGlobal);
+            ));
 
-            tree.Update(blackboardGlobal);
+            tree.Update();
 
             Assert.AreEqual(10, tree.PropertyGet(PropertyDecs.IntProperty));
 
-            tree.Update(blackboardGlobal);
+            tree.Update();
 
-            DoCloneBehavior(cloneBehavior, ref tree, ref blackboardGlobal);
+            DoCloneBehavior(cloneBehavior, ref tree);
 
             Assert.AreEqual(20, tree.PropertyGet(PropertyDecs.IntProperty));
 
-            tree.Update(blackboardGlobal);
+            tree.Update();
 
-            DoCloneBehavior(cloneBehavior, ref tree, ref blackboardGlobal);
+            DoCloneBehavior(cloneBehavior, ref tree);
 
             Assert.AreEqual(0, tree.PropertyGet(PropertyDecs.IntProperty));
         }
@@ -119,26 +116,24 @@ namespace ArborTest
             ");
             parser.Finish();
 
-            var blackboardGlobal = new Blackboard();
             Arbor.Tree tree = new Arbor.Tree(new Arbor.Sequence(
                     new PropertyTestNode(),
                     new PropertyTestNode()
                         .PropertyAttach(PropertyDecs.IntProperty, 20),
                     new PropertyTestNode()
-                ).PropertyAttach(PropertyDecs.IntProperty, 10)
-            , blackboardGlobal);
+                ).PropertyAttach(PropertyDecs.IntProperty, 10));
 
-            tree.Update(blackboardGlobal);
+            tree.Update();
 
             Assert.AreEqual(10, tree.PropertyGet(PropertyDecs.IntProperty));
 
-            tree.Update(blackboardGlobal);
-            DoCloneBehavior(cloneBehavior, ref tree, ref blackboardGlobal);
+            tree.Update();
+            DoCloneBehavior(cloneBehavior, ref tree);
 
             Assert.AreEqual(20, tree.PropertyGet(PropertyDecs.IntProperty));
 
-            tree.Update(blackboardGlobal);
-            DoCloneBehavior(cloneBehavior, ref tree, ref blackboardGlobal);
+            tree.Update();
+            DoCloneBehavior(cloneBehavior, ref tree);
 
             Assert.AreEqual(10, tree.PropertyGet(PropertyDecs.IntProperty));
         }
@@ -158,18 +153,17 @@ namespace ArborTest
             ");
             parser.Finish();
 
-            var blackboardGlobal = new Blackboard();
-            Arbor.Tree tree = new Arbor.Tree(new PropertyTestNode(), blackboardGlobal);
+            Arbor.Tree tree = new Arbor.Tree(new PropertyTestNode());
 
-            DoCloneBehavior(cloneBehavior, ref tree, ref blackboardGlobal);
+            DoCloneBehavior(cloneBehavior, ref tree);
 
-            tree.Update(blackboardGlobal);
+            tree.Update();
 
             Assert.AreEqual(0, tree.PropertyGet(PropertyDecs.IntProperty));
             Assert.AreEqual(null, tree.PropertyGet(PropertyDecs.StringProperty));
             Assert.AreEqual(false, tree.PropertyGet(PropertyDecs.BoolProperty));
 
-            DoCloneBehavior(cloneBehavior, ref tree, ref blackboardGlobal);
+            DoCloneBehavior(cloneBehavior, ref tree);
         }
     }
 }

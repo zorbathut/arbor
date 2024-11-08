@@ -10,24 +10,22 @@ namespace Arbor
         {
             private Tree old;
             private Tree current;
-            public Scope(Tree tree, Blackboard global)
+            public Scope(Tree tree)
             {
                 old = Current.Value;
                 current = tree;
                 Current.Value = current;
-                current.blackboards["global"] = global;
             }
 
             public void Dispose()
             {
                 Assert.AreSame(Current.Value, current);
-                current.blackboards["global"] = null;
                 Current.Value = old;
             }
         }
 
         private Node root;
-        private Dictionary<string, Blackboard> blackboards = new Dictionary<string, Blackboard>();
+        private Blackboard blackboard;
 
         // refreshed on every update; used for event triggers
         // we don't initialize it here because that causes problems with dec serialization
@@ -38,56 +36,57 @@ namespace Arbor
         internal List<Node> stack = new List<Node>();
 
         private Tree() { }  // exists just for Dec
-        public Tree(Node root, Blackboard global)
+        public Tree(Node root)
         {
             this.root = root;
 
-            blackboards["tree"] = new Blackboard();
             active = new List<Node>();
 
-            using (new Scope(this, global))
+            blackboard = new Blackboard();
+
+            using (new Scope(this))
             {
                 root?.Init();
             }
         }
 
-        public void Update(Blackboard global)
+        public void Update()
         {
             active.Clear();
-            using (new Scope(this, global))
+            using (new Scope(this))
             {
                 root?.Update();
             }
         }
 
-        public void EventInvoke(Blackboard global, EventDec ev)
+        public void EventInvoke(EventDec ev)
         {
-            EventInvokeWorker(global, ev, null);
+            EventInvokeWorker(ev, null);
         }
 
-        public void EventInvoke<T1>(Blackboard global, EventDec<T1> ev, T1 param1)
+        public void EventInvoke<T1>(EventDec<T1> ev, T1 param1)
         {
-            EventInvokeWorker(global, ev, new object[] { param1 });
+            EventInvokeWorker(ev, new object[] { param1 });
         }
 
-        public void EventInvoke<T1, T2>(Blackboard global, EventDec<T1, T2> ev, T1 param1, T2 param2)
+        public void EventInvoke<T1, T2>(EventDec<T1, T2> ev, T1 param1, T2 param2)
         {
-            EventInvokeWorker(global, ev, new object[] { param1, param2 });
+            EventInvokeWorker(ev, new object[] { param1, param2 });
         }
 
-        public void EventInvoke<T1, T2, T3>(Blackboard global, EventDec<T1, T2, T3> ev, T1 param1, T2 param2, T3 param3)
+        public void EventInvoke<T1, T2, T3>(EventDec<T1, T2, T3> ev, T1 param1, T2 param2, T3 param3)
         {
-            EventInvokeWorker(global, ev, new object[] { param1, param2, param3 });
+            EventInvokeWorker(ev, new object[] { param1, param2, param3 });
         }
 
-        public void EventInvoke<T1, T2, T3, T4>(Blackboard global, EventDec<T1, T2, T3, T4> ev, T1 param1, T2 param2, T3 param3, T4 param4)
+        public void EventInvoke<T1, T2, T3, T4>(EventDec<T1, T2, T3, T4> ev, T1 param1, T2 param2, T3 param3, T4 param4)
         {
-            EventInvokeWorker(global, ev, new object[] { param1, param2, param3, param4 });
+            EventInvokeWorker(ev, new object[] { param1, param2, param3, param4 });
         }
 
-        private void EventInvokeWorker(Blackboard global, BaseEventDec ev, object[] param)
+        private void EventInvokeWorker(BaseEventDec ev, object[] param)
         {
-            using (new Scope(this, global))
+            using (new Scope(this))
             {
                 foreach (var node in active)
                 {
@@ -122,31 +121,31 @@ namespace Arbor
             root.Reset();
         }
 
-        public Blackboard Blackboard(string id)
+        public Blackboard Blackboard()
         {
-            return blackboards[id];
+            return blackboard;
         }
 
         internal T BlackboardGet<T>(BlackboardIdentifier identifier)
         {
-            return blackboards[identifier.bb].Get<T>(identifier.id);
+            return blackboard.Get<T>(identifier.id);
         }
 
         internal void BlackboardSet<T>(BlackboardIdentifier identifier, T item)
         {
-            blackboards[identifier.bb].Set<T>(identifier.id, item);
+            blackboard.Set<T>(identifier.id, item);
         }
 
         internal void Register<T>(BlackboardIdentifier identifier)
         {
-            blackboards[identifier.bb].Register(identifier.id, typeof(T));
+            blackboard.Register(identifier.id, typeof(T));
         }
 
         public void Record(Dec.Recorder recorder)
         {
             recorder.Shared().Record(ref root, nameof(root));
             recorder.Shared().Record(ref active, nameof(active));
-            recorder.Record(ref blackboards, nameof(blackboards));
+            recorder.Record(ref blackboard, nameof(blackboard));
         }
     }
 }
