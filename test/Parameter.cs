@@ -24,7 +24,7 @@ namespace ArborTest
 
         public class BasicTree : Arbor.TreeDec.ITreeFactory
         {
-            public Node Create()
+            public Node Create(Blackboard blackboardDescriptor)
             {
                 return new ParameterTestNode()
                 {
@@ -95,7 +95,7 @@ namespace ArborTest
 
         public class RegistrationFailureTree : Arbor.TreeDec.ITreeFactory
         {
-            public Node Create()
+            public Node Create(Blackboard blackboardDescriptor)
             {
                 return new ListChild();
             }
@@ -123,7 +123,7 @@ namespace ArborTest
 
         public class RegistrationListTree : Arbor.TreeDec.ITreeFactory
         {
-            public Node Create()
+            public Node Create(Blackboard blackboardDescriptor)
             {
                 return new ListChild(
                     new ParameterTestNode() {
@@ -156,7 +156,7 @@ namespace ArborTest
 
         public class RegistrationArrayTree : Arbor.TreeDec.ITreeFactory
         {
-            public Node Create()
+            public Node Create(Blackboard blackboardDescriptor)
             {
                 return new ArrayChild(
                     new ParameterTestNode() {

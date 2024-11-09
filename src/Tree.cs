@@ -10,7 +10,7 @@ namespace Arbor
 
         public interface ITreeFactory
         {
-            Node Create();
+            Node Create(Blackboard blackboardDescriptor);
         }
 
         [NonSerialized]
@@ -36,8 +36,6 @@ namespace Arbor
             {
                 reporter("Worker is not ITreeFactory; at the moment this is mandatory");
             }
-
-            root = (worker as ITreeFactory).Create();
         }
 
         public override void PostLoad(Action<string> reporter)
@@ -45,6 +43,8 @@ namespace Arbor
             base.PostLoad(reporter);
 
             blackboardDescriptor = new Blackboard();
+
+            root = (worker as ITreeFactory).Create(blackboardDescriptor);
 
             var nodeList = new List<Node>();
             root?.Init(blackboardDescriptor, nodeList);
