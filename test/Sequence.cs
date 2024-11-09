@@ -1,3 +1,4 @@
+using System;
 using Arbor;
 using NUnit.Framework;
 
@@ -7,104 +8,124 @@ namespace ArborTest
     [Dec.RecorderEnumerator.RecordableClosures]
     public class Sequence : Base
     {
-        static int stage1_seen = 0;
-        static Result stage2_rf = Result.Working;
-        static int stage3_seen = 0;
-        static Result stage4_rf = Result.Working;
-        static int stage5_seen = 0;
-        static Result stage6_rf = Result.Working;
-        static int stage7_seen = 0;
+        public class SequenceWorker : TreeDec.ITreeFactory
+        {
+            public static int stage1_seen = 0;
+            public static Result stage2_rf = Result.Working;
+            public static int stage3_seen = 0;
+            public static Result stage4_rf = Result.Working;
+            public static int stage5_seen = 0;
+            public static Result stage6_rf = Result.Working;
+            public static int stage7_seen = 0;
+
+            public Arbor.Node Create()
+            {
+                return new Arbor.Sequence(
+                    new FunctionSimple(() =>
+                    {
+                        stage1_seen++;
+                        return true;
+                    }),
+                    new ResultFunction(() => stage2_rf),
+                    new FunctionSimple(() =>
+                    {
+                        stage3_seen++;
+                        return true;
+                    }),
+                    new ResultFunction(() => stage4_rf),
+                    new FunctionSimple(() =>
+                    {
+                        stage5_seen++;
+                        return true;
+                    }),
+                    new ResultFunction(() => stage6_rf),
+                    new FunctionSimple(() =>
+                    {
+                        stage7_seen++;
+                        return true;
+                    })
+                );
+            }
+        }
 
         [Test]
         public void Basic([Values] CloneBehavior cloneBehavior)
         {
-            stage1_seen = 0;
-            stage2_rf = Result.Working;
-            stage3_seen = 0;
-            stage4_rf = Result.Working;
-            stage5_seen = 0;
-            stage6_rf = Result.Working;
-            stage7_seen = 0;
+            UpdateTestParameters(new Dec.Config.UnitTestParameters { explicitTypes = new Type[] { typeof(SequenceWorker) } });
 
-            Arbor.Tree tree = new Arbor.Tree(new Arbor.Sequence(
-                new FunctionSimple(() =>
-                {
-                    stage1_seen++;
-                    return true;
-                }),
-                new ResultFunction(() => stage2_rf),
-                new FunctionSimple(() =>
-                {
-                    stage3_seen++;
-                    return true;
-                }),
-                new ResultFunction(() => stage4_rf),
-                new FunctionSimple(() =>
-                {
-                    stage5_seen++;
-                    return true;
-                }),
-                new ResultFunction(() => stage6_rf),
-                new FunctionSimple(() =>
-                {
-                    stage7_seen++;
-                    return true;
-                })
-            ));
+            var parser = new Dec.Parser();
+            parser.AddString(Dec.Parser.FileType.Xml, @"
+                <Decs>
+                    <Arbor.TreeDec decName=""Test"">
+                        <worker class=""ArborTest.Sequence.SequenceWorker"" />
+                    </Arbor.TreeDec>
+                </Decs>
+            ");
+            parser.Finish();
 
-            DoCloneBehavior(cloneBehavior, ref tree);
-            tree.Update();
+            SequenceWorker.stage1_seen = 0;
+            SequenceWorker.stage2_rf = Result.Working;
+            SequenceWorker.stage3_seen = 0;
+            SequenceWorker.stage4_rf = Result.Working;
+            SequenceWorker.stage5_seen = 0;
+            SequenceWorker.stage6_rf = Result.Working;
+            SequenceWorker.stage7_seen = 0;
 
-            Assert.AreEqual(1, stage1_seen);
-            Assert.AreEqual(0, stage3_seen);
-            Assert.AreEqual(0, stage5_seen);
-            Assert.AreEqual(0, stage7_seen);
+            var state = new Arbor.State(Dec.Database<Arbor.TreeDec>.Get("Test"));
 
-            DoCloneBehavior(cloneBehavior, ref tree);
-            tree.Update();
+            DoCloneBehavior(cloneBehavior, ref state);
+            state.Update();
 
-            Assert.AreEqual(1, stage1_seen);
-            Assert.AreEqual(0, stage3_seen);
-            Assert.AreEqual(0, stage5_seen);
-            Assert.AreEqual(0, stage7_seen);
+            Assert.AreEqual(1, SequenceWorker.stage1_seen);
+            Assert.AreEqual(0, SequenceWorker.stage3_seen);
+            Assert.AreEqual(0, SequenceWorker.stage5_seen);
+            Assert.AreEqual(0, SequenceWorker.stage7_seen);
 
-            DoCloneBehavior(cloneBehavior, ref tree);
-            stage2_rf = Result.Success;
-            tree.Update();
+            DoCloneBehavior(cloneBehavior, ref state);
+            state.Update();
 
-            Assert.AreEqual(1, stage1_seen);
-            Assert.AreEqual(1, stage3_seen);
-            Assert.AreEqual(0, stage5_seen);
-            Assert.AreEqual(0, stage7_seen);
+            Assert.AreEqual(1, SequenceWorker.stage1_seen);
+            Assert.AreEqual(0, SequenceWorker.stage3_seen);
+            Assert.AreEqual(0, SequenceWorker.stage5_seen);
+            Assert.AreEqual(0, SequenceWorker.stage7_seen);
 
-            DoCloneBehavior(cloneBehavior, ref tree);
-            stage4_rf = Result.Failure;
-            tree.Update();
+            DoCloneBehavior(cloneBehavior, ref state);
+            SequenceWorker.stage2_rf = Result.Success;
+            state.Update();
 
-            Assert.AreEqual(1, stage1_seen);
-            Assert.AreEqual(1, stage3_seen);
-            Assert.AreEqual(0, stage5_seen);
-            Assert.AreEqual(0, stage7_seen);
+            Assert.AreEqual(1, SequenceWorker.stage1_seen);
+            Assert.AreEqual(1, SequenceWorker.stage3_seen);
+            Assert.AreEqual(0, SequenceWorker.stage5_seen);
+            Assert.AreEqual(0, SequenceWorker.stage7_seen);
 
-            DoCloneBehavior(cloneBehavior, ref tree);
-            tree.Update();
+            DoCloneBehavior(cloneBehavior, ref state);
+            SequenceWorker.stage4_rf = Result.Failure;
+            state.Update();
 
-            Assert.AreEqual(2, stage1_seen);
-            Assert.AreEqual(2, stage3_seen);
-            Assert.AreEqual(0, stage5_seen);
-            Assert.AreEqual(0, stage7_seen);
+            Assert.AreEqual(1, SequenceWorker.stage1_seen);
+            Assert.AreEqual(1, SequenceWorker.stage3_seen);
+            Assert.AreEqual(0, SequenceWorker.stage5_seen);
+            Assert.AreEqual(0, SequenceWorker.stage7_seen);
 
-            DoCloneBehavior(cloneBehavior, ref tree);
-            stage4_rf = Result.Success;
-            stage6_rf = Result.Success;
-            tree.Update();
+            DoCloneBehavior(cloneBehavior, ref state);
+            state.Update();
 
-            Assert.AreEqual(3, stage1_seen);
-            Assert.AreEqual(3, stage3_seen);
-            Assert.AreEqual(1, stage5_seen);
-            Assert.AreEqual(1, stage7_seen);
+            Assert.AreEqual(2, SequenceWorker.stage1_seen);
+            Assert.AreEqual(2, SequenceWorker.stage3_seen);
+            Assert.AreEqual(0, SequenceWorker.stage5_seen);
+            Assert.AreEqual(0, SequenceWorker.stage7_seen);
 
-            DoCloneBehavior(cloneBehavior, ref tree);
+            DoCloneBehavior(cloneBehavior, ref state);
+            SequenceWorker.stage4_rf = Result.Success;
+            SequenceWorker.stage6_rf = Result.Success;
+            state.Update();
+
+            Assert.AreEqual(3, SequenceWorker.stage1_seen);
+            Assert.AreEqual(3, SequenceWorker.stage3_seen);
+            Assert.AreEqual(1, SequenceWorker.stage5_seen);
+            Assert.AreEqual(1, SequenceWorker.stage7_seen);
+
+            DoCloneBehavior(cloneBehavior, ref state);
         }
     }
 }

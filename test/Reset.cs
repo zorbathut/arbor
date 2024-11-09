@@ -19,46 +19,68 @@ namespace ArborTest
             }
         }
 
+        public class BasicTree : Arbor.TreeDec.ITreeFactory
+        {
+            public Node Create()
+            {
+                return new Arbor.Sequence(
+                    new IncrementNode(),
+                    new WaitNode(),
+                    new IncrementNode()
+                );
+            }
+        }
+
         [Test]
         public void Basic([Values] CloneBehavior cloneBehavior)
         {
-            var tree = new Arbor.Tree(new Arbor.Sequence(
-                new IncrementNode(),
-                new WaitNode(),
-                new IncrementNode()
-            ));
+            UpdateTestParameters(new Dec.Config.UnitTestParameters {
+                explicitTypes = new System.Type[] { typeof(BasicTree) }
+            });
+
+            var parser = new Dec.Parser();
+            parser.AddString(Dec.Parser.FileType.Xml, @"
+                <Decs>
+                    <Arbor.TreeDec decName=""Test"">
+                        <worker class=""ArborTest.Reset.BasicTree"" />
+                    </Arbor.TreeDec>
+                </Decs>
+            ");
+            parser.Finish();
+
+            var state = new Arbor.State(Dec.Database<Arbor.TreeDec>.Get("Test"));
 
             IncrementNode.IncrementValue = 0;
             Assert.AreEqual(0, IncrementNode.IncrementValue);
 
-            DoCloneBehavior(cloneBehavior, ref tree);
+            DoCloneBehavior(cloneBehavior, ref state);
 
-            tree.Update();
+            state.Update();
             Assert.AreEqual(1, IncrementNode.IncrementValue);
 
-            DoCloneBehavior(cloneBehavior, ref tree);
+            DoCloneBehavior(cloneBehavior, ref state);
 
-            tree.Update();
+            state.Update();
             Assert.AreEqual(1, IncrementNode.IncrementValue);
 
-            DoCloneBehavior(cloneBehavior, ref tree);
+            DoCloneBehavior(cloneBehavior, ref state);
 
-            tree.Update();
+            state.Update();
             Assert.AreEqual(1, IncrementNode.IncrementValue);
 
-            DoCloneBehavior(cloneBehavior, ref tree);
+            DoCloneBehavior(cloneBehavior, ref state);
 
-            tree.Reset();
+            state.Reset();
             Assert.AreEqual(1, IncrementNode.IncrementValue);
 
-            DoCloneBehavior(cloneBehavior, ref tree);
+            DoCloneBehavior(cloneBehavior, ref state);
 
-            tree.Update();
+            state.Update();
             Assert.AreEqual(2, IncrementNode.IncrementValue);
 
-            DoCloneBehavior(cloneBehavior, ref tree);
+            DoCloneBehavior(cloneBehavior, ref state);
 
-            tree.Update();
+            state.Update();
             Assert.AreEqual(2, IncrementNode.IncrementValue);
         }
     }

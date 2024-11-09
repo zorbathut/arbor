@@ -28,43 +28,24 @@ namespace ArborTest
             }
         }
 
-        [Test]
-        public void Basic([Values] CloneBehavior cloneBehavior)
+        public class BasicTree : Arbor.TreeDec.ITreeFactory
         {
-            UpdateTestParameters(new Dec.Config.UnitTestParameters { explicitStaticRefs = new System.Type[] { typeof(PropertyDecs) } });
-
-            var parser = new Dec.Parser();
-            parser.AddString(Dec.Parser.FileType.Xml, @"
-                <Decs>
-                    <Arbor.BasePropertyDec decName=""IntProperty"" class=""Arbor.PropertyDec{int}"" />
-                    <Arbor.BasePropertyDec decName=""StringProperty"" class=""Arbor.PropertyDec{string}"" />
-                    <Arbor.BasePropertyDec decName=""BoolProperty"" class=""Arbor.PropertyDec{bool}"" />
-                </Decs>
-            ");
-            parser.Finish();
-
-            Arbor.Tree tree = new Arbor.Tree(new PropertyTestNode()
-                .PropertyAttach(PropertyDecs.IntProperty, 42)
-                .PropertyAttach(PropertyDecs.StringProperty, "Hello")
-                .PropertyAttach(PropertyDecs.BoolProperty, true));
-
-            Assert.AreEqual(0, tree.PropertyGet(PropertyDecs.IntProperty));
-            Assert.AreEqual(null, tree.PropertyGet(PropertyDecs.StringProperty));
-            Assert.AreEqual(false, tree.PropertyGet(PropertyDecs.BoolProperty));
-
-            tree.Update();
-
-            DoCloneBehavior(cloneBehavior, ref tree);
-
-            Assert.AreEqual(42, tree.PropertyGet(PropertyDecs.IntProperty));
-            Assert.AreEqual("Hello", tree.PropertyGet(PropertyDecs.StringProperty));
-            Assert.AreEqual(true, tree.PropertyGet(PropertyDecs.BoolProperty));
+            public Node Create()
+            {
+                return new PropertyTestNode()
+                    .PropertyAttach(PropertyDecs.IntProperty, 42)
+                    .PropertyAttach(PropertyDecs.StringProperty, "Hello")
+                    .PropertyAttach(PropertyDecs.BoolProperty, true);
+            }
         }
 
         [Test]
-        public void PropertyInheritanceTest([Values] CloneBehavior cloneBehavior)
+        public void Basic([Values] CloneBehavior cloneBehavior)
         {
-            UpdateTestParameters(new Dec.Config.UnitTestParameters { explicitStaticRefs = new System.Type[] { typeof(PropertyDecs) } });
+            UpdateTestParameters(new Dec.Config.UnitTestParameters {
+                explicitTypes = new System.Type[] { typeof(BasicTree) },
+                explicitStaticRefs = new System.Type[] { typeof(PropertyDecs) }
+            });
 
             var parser = new Dec.Parser();
             parser.AddString(Dec.Parser.FileType.Xml, @"
@@ -72,39 +53,104 @@ namespace ArborTest
                     <Arbor.BasePropertyDec decName=""IntProperty"" class=""Arbor.PropertyDec{int}"" />
                     <Arbor.BasePropertyDec decName=""StringProperty"" class=""Arbor.PropertyDec{string}"" />
                     <Arbor.BasePropertyDec decName=""BoolProperty"" class=""Arbor.PropertyDec{bool}"" />
+
+                    <Arbor.TreeDec decName=""Test"">
+                        <worker class=""ArborTest.Property.BasicTree"" />
+                    </Arbor.TreeDec>
                 </Decs>
             ");
             parser.Finish();
 
-            Arbor.Tree tree = new Arbor.Tree(new Arbor.Sequence(
-                new PropertyTestNode()
-                    .PropertyAttach(PropertyDecs.IntProperty, 10),
-                new PropertyTestNode()
-                    .PropertyAttach(PropertyDecs.IntProperty, 20),
-                new PropertyTestNode()
-            ));
+            var state = new Arbor.State(Dec.Database<Arbor.TreeDec>.Get("Test"));
 
-            tree.Update();
+            Assert.AreEqual(0, state.PropertyGet(PropertyDecs.IntProperty));
+            Assert.AreEqual(null, state.PropertyGet(PropertyDecs.StringProperty));
+            Assert.AreEqual(false, state.PropertyGet(PropertyDecs.BoolProperty));
 
-            Assert.AreEqual(10, tree.PropertyGet(PropertyDecs.IntProperty));
+            state.Update();
 
-            tree.Update();
+            DoCloneBehavior(cloneBehavior, ref state);
 
-            DoCloneBehavior(cloneBehavior, ref tree);
+            Assert.AreEqual(42, state.PropertyGet(PropertyDecs.IntProperty));
+            Assert.AreEqual("Hello", state.PropertyGet(PropertyDecs.StringProperty));
+            Assert.AreEqual(true, state.PropertyGet(PropertyDecs.BoolProperty));
+        }
 
-            Assert.AreEqual(20, tree.PropertyGet(PropertyDecs.IntProperty));
+        public class PropertyInheritanceTree : Arbor.TreeDec.ITreeFactory
+        {
+            public Node Create()
+            {
+                return new Arbor.Sequence(
+                    new PropertyTestNode()
+                        .PropertyAttach(PropertyDecs.IntProperty, 10),
+                    new PropertyTestNode()
+                        .PropertyAttach(PropertyDecs.IntProperty, 20),
+                    new PropertyTestNode()
+                );
+            }
+        }
 
-            tree.Update();
+        [Test]
+        public void PropertyInheritance([Values] CloneBehavior cloneBehavior)
+        {
+            UpdateTestParameters(new Dec.Config.UnitTestParameters {
+                explicitTypes = new System.Type[] { typeof(PropertyInheritanceTree) },
+                explicitStaticRefs = new System.Type[] { typeof(PropertyDecs) }
+            });
 
-            DoCloneBehavior(cloneBehavior, ref tree);
+            var parser = new Dec.Parser();
+            parser.AddString(Dec.Parser.FileType.Xml, @"
+                <Decs>
+                    <Arbor.BasePropertyDec decName=""IntProperty"" class=""Arbor.PropertyDec{int}"" />
+                    <Arbor.BasePropertyDec decName=""StringProperty"" class=""Arbor.PropertyDec{string}"" />
+                    <Arbor.BasePropertyDec decName=""BoolProperty"" class=""Arbor.PropertyDec{bool}"" />
 
-            Assert.AreEqual(0, tree.PropertyGet(PropertyDecs.IntProperty));
+                    <Arbor.TreeDec decName=""Test"">
+                        <worker class=""ArborTest.Property.PropertyInheritanceTree"" />
+                    </Arbor.TreeDec>
+                </Decs>
+            ");
+            parser.Finish();
+
+            var state = new Arbor.State(Dec.Database<Arbor.TreeDec>.Get("Test"));
+
+            state.Update();
+
+            Assert.AreEqual(10, state.PropertyGet(PropertyDecs.IntProperty));
+
+            state.Update();
+
+            DoCloneBehavior(cloneBehavior, ref state);
+
+            Assert.AreEqual(20, state.PropertyGet(PropertyDecs.IntProperty));
+
+            state.Update();
+
+            DoCloneBehavior(cloneBehavior, ref state);
+
+            Assert.AreEqual(0, state.PropertyGet(PropertyDecs.IntProperty));
+        }
+
+        public class PropertyOverrideTree : Arbor.TreeDec.ITreeFactory
+        {
+            public Node Create()
+            {
+                return new Arbor.Sequence(
+                    new PropertyTestNode(),
+                    new PropertyTestNode()
+                        .PropertyAttach(PropertyDecs.IntProperty, 20),
+                    new PropertyTestNode()
+                ).PropertyAttach(PropertyDecs.IntProperty, 10);
+            }
         }
 
         [Test]
         public void PropertyOverrideTest([Values] CloneBehavior cloneBehavior)
         {
-            UpdateTestParameters(new Dec.Config.UnitTestParameters { explicitStaticRefs = new System.Type[] { typeof(PropertyDecs) } });
+            UpdateTestParameters(new Dec.Config.UnitTestParameters {
+                explicitTypes = new System.Type[] { typeof(PropertyOverrideTree) },
+                explicitStaticRefs = new System.Type[] { typeof(PropertyDecs) }
+            });
 
             var parser = new Dec.Parser();
             parser.AddString(Dec.Parser.FileType.Xml, @"
@@ -112,36 +158,47 @@ namespace ArborTest
                     <Arbor.BasePropertyDec decName=""IntProperty"" class=""Arbor.PropertyDec{int}"" />
                     <Arbor.BasePropertyDec decName=""StringProperty"" class=""Arbor.PropertyDec{string}"" />
                     <Arbor.BasePropertyDec decName=""BoolProperty"" class=""Arbor.PropertyDec{bool}"" />
+
+                    <Arbor.TreeDec decName=""Test"">
+                        <worker class=""ArborTest.Property.PropertyOverrideTree"" />
+                    </Arbor.TreeDec>
                 </Decs>
             ");
             parser.Finish();
 
-            Arbor.Tree tree = new Arbor.Tree(new Arbor.Sequence(
-                    new PropertyTestNode(),
-                    new PropertyTestNode()
-                        .PropertyAttach(PropertyDecs.IntProperty, 20),
-                    new PropertyTestNode()
-                ).PropertyAttach(PropertyDecs.IntProperty, 10));
+            var state = new Arbor.State(Dec.Database<Arbor.TreeDec>.Get("Test"));
 
-            tree.Update();
+            state.Update();
 
-            Assert.AreEqual(10, tree.PropertyGet(PropertyDecs.IntProperty));
+            Assert.AreEqual(10, state.PropertyGet(PropertyDecs.IntProperty));
 
-            tree.Update();
-            DoCloneBehavior(cloneBehavior, ref tree);
+            state.Update();
+            DoCloneBehavior(cloneBehavior, ref state);
 
-            Assert.AreEqual(20, tree.PropertyGet(PropertyDecs.IntProperty));
+            Assert.AreEqual(20, state.PropertyGet(PropertyDecs.IntProperty));
 
-            tree.Update();
-            DoCloneBehavior(cloneBehavior, ref tree);
+            state.Update();
+            DoCloneBehavior(cloneBehavior, ref state);
 
-            Assert.AreEqual(10, tree.PropertyGet(PropertyDecs.IntProperty));
+            Assert.AreEqual(10, state.PropertyGet(PropertyDecs.IntProperty));
+        }
+
+
+        public class PropertyDefaultValueTree : Arbor.TreeDec.ITreeFactory
+        {
+            public Node Create()
+            {
+                return new PropertyTestNode();
+            }
         }
 
         [Test]
-        public void PropertyDefaultValueTest([Values] CloneBehavior cloneBehavior)
+        public void PropertyDefaultValue([Values] CloneBehavior cloneBehavior)
         {
-            UpdateTestParameters(new Dec.Config.UnitTestParameters { explicitStaticRefs = new System.Type[] { typeof(PropertyDecs) } });
+            UpdateTestParameters(new Dec.Config.UnitTestParameters {
+                explicitTypes = new System.Type[] { typeof(PropertyDefaultValueTree) },
+                explicitStaticRefs = new System.Type[] { typeof(PropertyDecs) }
+            });
 
             var parser = new Dec.Parser();
             parser.AddString(Dec.Parser.FileType.Xml, @"
@@ -149,21 +206,25 @@ namespace ArborTest
                     <Arbor.BasePropertyDec decName=""IntProperty"" class=""Arbor.PropertyDec{int}"" />
                     <Arbor.BasePropertyDec decName=""StringProperty"" class=""Arbor.PropertyDec{string}"" />
                     <Arbor.BasePropertyDec decName=""BoolProperty"" class=""Arbor.PropertyDec{bool}"" />
+
+                    <Arbor.TreeDec decName=""Test"">
+                        <worker class=""ArborTest.Property.PropertyDefaultValueTree"" />
+                    </Arbor.TreeDec>
                 </Decs>
             ");
             parser.Finish();
 
-            Arbor.Tree tree = new Arbor.Tree(new PropertyTestNode());
+            var state = new Arbor.State(Dec.Database<Arbor.TreeDec>.Get("Test"));
 
-            DoCloneBehavior(cloneBehavior, ref tree);
+            DoCloneBehavior(cloneBehavior, ref state);
 
-            tree.Update();
+            state.Update();
 
-            Assert.AreEqual(0, tree.PropertyGet(PropertyDecs.IntProperty));
-            Assert.AreEqual(null, tree.PropertyGet(PropertyDecs.StringProperty));
-            Assert.AreEqual(false, tree.PropertyGet(PropertyDecs.BoolProperty));
+            Assert.AreEqual(0, state.PropertyGet(PropertyDecs.IntProperty));
+            Assert.AreEqual(null, state.PropertyGet(PropertyDecs.StringProperty));
+            Assert.AreEqual(false, state.PropertyGet(PropertyDecs.BoolProperty));
 
-            DoCloneBehavior(cloneBehavior, ref tree);
+            DoCloneBehavior(cloneBehavior, ref state);
         }
     }
 }

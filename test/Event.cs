@@ -29,7 +29,7 @@ namespace ArborTest
             public static EventDec<int, int, int, int> FourParameter;
         }
 
-        class Payload : Dec.IRecordable
+        public class Payload : Dec.IRecordable
         {
             public int seen0;
             public int seen1;
@@ -47,10 +47,25 @@ namespace ArborTest
             }
         }
 
+        public class BasicTree : Arbor.TreeDec.ITreeFactory
+        {
+            public static Payload payload;
+
+            public Node Create()
+            {
+                return new IdleNode()
+                    .EventAttach(EventDecs.ZeroParameter, () => payload.seen0++)
+                    .EventAttach(EventDecs.OneParameter, (int a) => payload.seen1 += a)
+                    .EventAttach(EventDecs.TwoParameter, (int a, int b) => payload.seen2 += a + b)
+                    .EventAttach(EventDecs.ThreeParameter, (int a, int b, int c) => payload.seen3 += a + b + c)
+                    .EventAttach(EventDecs.FourParameter, (int a, int b, int c, int d) => payload.seen4 += a + b + c + d);
+            }
+        }
+
         [Test]
         public void Basic([Values] CloneBehavior cloneBehavior)
         {
-            UpdateTestParameters(new Dec.Config.UnitTestParameters { explicitStaticRefs = new System.Type[] { typeof(EventDecs) } });
+            UpdateTestParameters(new Dec.Config.UnitTestParameters { explicitTypes = new System.Type[] { typeof(BasicTree) }, explicitStaticRefs = new System.Type[] { typeof(EventDecs) } });
 
             var parser = new Dec.Parser();
             parser.AddString(Dec.Parser.FileType.Xml, @"
@@ -60,47 +75,46 @@ namespace ArborTest
                     <Arbor.BaseEventDec decName=""TwoParameter"" class=""Arbor.EventDec{int, int}"" />
                     <Arbor.BaseEventDec decName=""ThreeParameter"" class=""Arbor.EventDec{int, int, int}"" />
                     <Arbor.BaseEventDec decName=""FourParameter"" class=""Arbor.EventDec{int, int, int, int}"" />
+
+                    <Arbor.TreeDec decName=""Test"">
+                        <worker class=""ArborTest.Event.BasicTree"" />
+                    </Arbor.TreeDec>
                 </Decs>
             ");
             parser.Finish();
 
-            var payload = new Payload();
+            BasicTree.payload = new Payload();
 
-            Arbor.Tree tree = new Arbor.Tree(new IdleNode()
-                .EventAttach(EventDecs.ZeroParameter, () => payload.seen0++)
-                .EventAttach(EventDecs.OneParameter, (int a) => payload.seen1 += a)
-                .EventAttach(EventDecs.TwoParameter, (int a, int b) => payload.seen2 += a + b)
-                .EventAttach(EventDecs.ThreeParameter, (int a, int b, int c) => payload.seen3 += a + b + c)
-                .EventAttach(EventDecs.FourParameter, (int a, int b, int c, int d) => payload.seen4 += a + b + c + d));
+            var state = new Arbor.State(Dec.Database<Arbor.TreeDec>.Get("Test"));
 
             // first-frame events get ignored because nothing has run
-            tree.Update();
+            state.Update();
 
-            tree.EventInvoke(EventDecs.ZeroParameter);
-            tree.EventInvoke(EventDecs.OneParameter, 1);
-            tree.EventInvoke(EventDecs.TwoParameter, 2, 3);
-            tree.EventInvoke(EventDecs.ThreeParameter, 4, 5, 6);
-            tree.EventInvoke(EventDecs.FourParameter, 7, 8, 9, 10);
+            state.EventInvoke(EventDecs.ZeroParameter);
+            state.EventInvoke(EventDecs.OneParameter, 1);
+            state.EventInvoke(EventDecs.TwoParameter, 2, 3);
+            state.EventInvoke(EventDecs.ThreeParameter, 4, 5, 6);
+            state.EventInvoke(EventDecs.FourParameter, 7, 8, 9, 10);
 
-            Assert.AreEqual(1, payload.seen0);
-            Assert.AreEqual(1, payload.seen1);
-            Assert.AreEqual(5, payload.seen2);
-            Assert.AreEqual(15, payload.seen3);
-            Assert.AreEqual(34, payload.seen4);
+            Assert.AreEqual(1, BasicTree.payload.seen0);
+            Assert.AreEqual(1, BasicTree.payload.seen1);
+            Assert.AreEqual(5, BasicTree.payload.seen2);
+            Assert.AreEqual(15, BasicTree.payload.seen3);
+            Assert.AreEqual(34, BasicTree.payload.seen4);
 
-            DoCloneBehavior(cloneBehavior, ref tree, ref payload);
+            DoCloneBehavior(cloneBehavior, ref state, ref BasicTree.payload);
 
-            tree.EventInvoke(EventDecs.ZeroParameter);
-            tree.EventInvoke(EventDecs.OneParameter, 11);
-            tree.EventInvoke(EventDecs.TwoParameter, 12, 13);
-            tree.EventInvoke(EventDecs.ThreeParameter, 14, 15, 16);
-            tree.EventInvoke(EventDecs.FourParameter, 17, 18, 19, 20);
+            state.EventInvoke(EventDecs.ZeroParameter);
+            state.EventInvoke(EventDecs.OneParameter, 11);
+            state.EventInvoke(EventDecs.TwoParameter, 12, 13);
+            state.EventInvoke(EventDecs.ThreeParameter, 14, 15, 16);
+            state.EventInvoke(EventDecs.FourParameter, 17, 18, 19, 20);
 
-            Assert.AreEqual(2, payload.seen0);
-            Assert.AreEqual(12, payload.seen1);
-            Assert.AreEqual(30, payload.seen2);
-            Assert.AreEqual(60, payload.seen3);
-            Assert.AreEqual(108, payload.seen4);
+            Assert.AreEqual(2, BasicTree.payload.seen0);
+            Assert.AreEqual(12, BasicTree.payload.seen1);
+            Assert.AreEqual(30, BasicTree.payload.seen2);
+            Assert.AreEqual(60, BasicTree.payload.seen3);
+            Assert.AreEqual(108, BasicTree.payload.seen4);
         }
     }
 }

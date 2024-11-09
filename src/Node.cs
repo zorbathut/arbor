@@ -10,22 +10,27 @@ namespace Arbor
         Failure,
     }
 
-    public abstract partial class Node : Dec.IRecordable
+    public abstract partial class Node
     {
-        private IEnumerator<Result> currentWorker;
         internal Dictionary<Arbor.BaseEventDec, List<System.Delegate>> eventActions;
         internal Dictionary<Arbor.BasePropertyDec, object> properties;
 
         private bool initted;
+        private int nodeIndex = -1;
 
-        public void Init()
+        public void Init(Blackboard blackboardDescriptor, List<Node> nodeList)
         {
             if (initted)
             {
                 Dbg.Err("Initted multiple times");
             }
 
-            InitFields();
+            // add to the node list
+            Assert.AreEqual(-1, nodeIndex);
+            nodeIndex = nodeList.Count;
+            nodeList.Add(this);
+
+            InitFields(blackboardDescriptor, nodeList);
 
             initted = true;
         }
@@ -37,13 +42,14 @@ namespace Arbor
                 Dbg.Err("Not initted");
             }
 
-            var tree = Tree.Current.Value;
-            tree.stack.Add(this);
+            var state = State.Current.Value;
+            state.stack.Add(this);
 
             // get it in the tree in the right order
-            int activeIndex = tree.active.Count;
-            tree.active.Add(this);
+            int activeIndex = state.active.Count;
+            state.active.Add(nodeIndex);
 
+            ref var currentWorker = ref state.enumerators[nodeIndex];
             bool moved;
             try
             {
@@ -59,7 +65,7 @@ namespace Arbor
                 Dbg.Ex(e);
                 moved = false;
             }
-            tree.stack.RemoveAt(tree.stack.Count - 1);
+            state.stack.RemoveAt(state.stack.Count - 1);
 
             if (!moved)
             {
@@ -73,7 +79,7 @@ namespace Arbor
                     Dbg.Ex(e);
                 }
 
-                tree.active[activeIndex] = null; // nope, not active anymore
+                state.active[activeIndex] = -1; // nope, not active anymore
                 return Result.Failure;
             }
 
@@ -89,7 +95,7 @@ namespace Arbor
                 {
                     Dbg.Ex(e);
                 }
-                tree.active[activeIndex] = null; // nope, not active anymore
+                state.active[activeIndex] = -1; // nope, not active anymore
             }
 
             return result;
@@ -125,30 +131,20 @@ namespace Arbor
 
         public virtual void Reset()
         {
+            ref var currentWorker = ref State.Current.Value.enumerators[nodeIndex];
+
             // already done, stop recursiving
             if (currentWorker == null)
             {
                 return;
             }
 
+            currentWorker.Dispose();
             currentWorker = null;
             ResetFields();
         }
 
-        public virtual void InitFields() { }
+        public virtual void InitFields(Blackboard blackboardDescriptor, List<Node> nodeList) { }
         public virtual void ResetFields() { }
-
-        public virtual void Record(Recorder recorder)
-        {
-            recorder.Record(ref currentWorker, nameof(currentWorker));
-            recorder.Record(ref eventActions, nameof(eventActions));
-            recorder.Record(ref properties, nameof(properties));
-
-            if (recorder.Mode == Recorder.Direction.Read)
-            {
-                // we actually just mark this as initted in the hopes that the behavior tree is set up properly; this all needs to vanish when we kill serializable behavior trees
-                initted = true;
-            }
-        }
     }
 }

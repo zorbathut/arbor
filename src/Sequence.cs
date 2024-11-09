@@ -35,12 +35,5 @@ namespace Arbor
             // I guess we iterated through everything!
             yield return Result.Success;
         }
-
-        public override void Record(Dec.Recorder recorder)
-        {
-            base.Record(recorder);
-
-            recorder.Shared().Record(ref m_children, nameof(m_children));
-        }
     }
 }

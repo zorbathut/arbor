@@ -40,6 +40,7 @@ namespace Arbor
                 bool foundSomething = false;
 
                 var source = new System.Text.StringBuilder();
+                source.AppendLine("using System.Collections.Generic;");
                 if (nodeNamespace != null)
                 {
                     source.AppendLine($"namespace {nodeNamespace} {{");
@@ -87,14 +88,14 @@ namespace Arbor
                             source.AppendLine($"  set => {bbp.Name}.Set(value);");
                             source.AppendLine($"}}");
 
-                            initFields.AppendLine($"{bbp.Name}.Register();");
+                            initFields.AppendLine($"{bbp.Name}.RegisterWith(blackboardDescriptor);");
                         }
 
                         // Check to see if this is derived from a Node
                         if (namedType.InheritsFrom(arborNodeType))
                         {
                             foundSomething = true;
-                            initFields.AppendLine($"{bbp.Name}.Init();");
+                            initFields.AppendLine($"{bbp.Name}.Init(blackboardDescriptor, nodeList);");
                             resetFields.AppendLine($"{bbp.Name}.Reset();");
                         }
 
@@ -108,7 +109,7 @@ namespace Arbor
                             if (typeArgument.InheritsFrom(arborNodeType))
                             {
                                 foundSomething = true;
-                                initFields.AppendLine($"foreach (var item in {bbp.Name}) item?.Init();");
+                                initFields.AppendLine($"foreach (var item in {bbp.Name}) item?.Init(blackboardDescriptor, nodeList);");
                                 resetFields.AppendLine($"foreach (var item in {bbp.Name}) item?.Reset();");
                             }
                         }
@@ -119,14 +120,14 @@ namespace Arbor
                         if (arrayType.ElementType.InheritsFrom(arborNodeType))
                         {
                             foundSomething = true;
-                            initFields.AppendLine($"foreach (var item in {bbp.Name}) item?.Init();");
+                            initFields.AppendLine($"foreach (var item in {bbp.Name}) item?.Init(blackboardDescriptor, nodeList);");
                             resetFields.AppendLine($"foreach (var item in {bbp.Name}) item?.Reset();");
                         }
                     }
                 }
 
-                source.AppendLine($"public override void InitFields() {{");
-                source.AppendLine($"  base.InitFields();");
+                source.AppendLine($"public override void InitFields(Arbor.Blackboard blackboardDescriptor, List<Arbor.Node> nodeList) {{");
+                source.AppendLine($"  base.InitFields(blackboardDescriptor, nodeList);");
                 source.AppendLine(initFields.ToString());
                 source.AppendLine($"}}");
 

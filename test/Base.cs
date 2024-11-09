@@ -112,13 +112,13 @@ namespace ArborTest
             WriteRead,
         }
 
-        public void DoCloneBehavior(CloneBehavior cloneBehavior, ref Arbor.Tree tree)
+        public void DoCloneBehavior(CloneBehavior cloneBehavior, ref Arbor.State state)
         {
             object extra = null;
-            DoCloneBehavior(cloneBehavior, ref tree, ref extra);
+            DoCloneBehavior(cloneBehavior, ref state, ref extra);
         }
 
-        public void DoCloneBehavior<T>(CloneBehavior cloneBehavior, ref Arbor.Tree tree, ref T extra)
+        public void DoCloneBehavior<T>(CloneBehavior cloneBehavior, ref Arbor.State state, ref T extra)
         {
             switch (cloneBehavior)
             {
@@ -126,11 +126,11 @@ namespace ArborTest
                     break;
 
                 case CloneBehavior.Clone:
-                    (tree, extra) = Dec.Recorder.Clone((tree, extra));
+                    (state, extra) = Dec.Recorder.Clone((state, extra));
                     break;
 
                 case CloneBehavior.WriteRead:
-                    (tree, extra) = Dec.Recorder.Read<(Arbor.Tree, T)>(Dec.Recorder.Write((tree, extra)));
+                    (state, extra) = Dec.Recorder.Read<(Arbor.State, T)>(Dec.Recorder.Write((state, extra)));
                     break;
             }
         }

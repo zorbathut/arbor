@@ -22,22 +22,17 @@ namespace Arbor
 
         public T Get()
         {
-            return Arbor.Tree.Current.Value.BlackboardGet<T>(identifier);
+            return State.Current.Value.BlackboardGet<T>(identifier);
         }
 
         public void Set(T value)
         {
-            Arbor.Tree.Current.Value.BlackboardSet<T>(identifier, value);
+            State.Current.Value.BlackboardSet<T>(identifier, value);
         }
 
-        public void Register()
+        public void RegisterWith(Blackboard blackboard)
         {
-            Arbor.Tree.Current.Value.Register<T>(identifier);
-        }
-
-        public void RegisterWith(Tree tree)
-        {
-            tree.Register<T>(identifier);
+            blackboard.Register(identifier.id, typeof(T));
         }
 
         public void Record(Dec.Recorder recorder)

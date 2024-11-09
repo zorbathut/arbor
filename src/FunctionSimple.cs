@@ -18,12 +18,5 @@ namespace Arbor
         {
             yield return condition() ? Result.Success : Result.Failure;
         }
-
-        public override void Record(Dec.Recorder recorder)
-        {
-            base.Record(recorder);
-
-            recorder.Record(ref condition, nameof(condition));
-        }
     }
 }

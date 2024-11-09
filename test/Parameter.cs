@@ -22,22 +22,43 @@ namespace ArborTest
             }
         }
 
+        public class BasicTree : Arbor.TreeDec.ITreeFactory
+        {
+            public Node Create()
+            {
+                return new ParameterTestNode()
+                {
+                    ReadId = Arbor.BlackboardParameter<string>.Tree("read"),
+                    WriteId = Arbor.BlackboardParameter<string>.Tree("write"),
+                };
+            }
+        }
+
         [Test]
         public void Basic()
         {
-            Arbor.Tree tree = new Arbor.Tree(new ParameterTestNode() {
-                ReadId = Arbor.BlackboardParameter<string>.Tree("read"),
-                WriteId = Arbor.BlackboardParameter<string>.Tree("write"),
-            });
+            UpdateTestParameters(new Dec.Config.UnitTestParameters { explicitTypes = new System.Type[] { typeof(BasicTree) } });
 
-            tree.Blackboard().Set<string>("read", "hello");
-            tree.Blackboard().Set<string>("write", "goodbye");
+            var parser = new Dec.Parser();
+            parser.AddString(Dec.Parser.FileType.Xml, @"
+                <Decs>
+                    <Arbor.TreeDec decName=""Test"">
+                        <worker class=""ArborTest.Parameter.BasicTree"" />
+                    </Arbor.TreeDec>
+                </Decs>
+            ");
+            parser.Finish();
 
-            Assert.AreEqual("goodbye", tree.Blackboard().Get<string>("write"));
+            var state = new Arbor.State(Dec.Database<Arbor.TreeDec>.Get("Test"));
 
-            tree.Update();
+            state.Blackboard().Set<string>("read", "hello");
+            state.Blackboard().Set<string>("write", "goodbye");
 
-            Assert.AreEqual("hello", tree.Blackboard().Get<string>("write"));
+            Assert.AreEqual("goodbye", state.Blackboard().Get<string>("write"));
+
+            state.Update();
+
+            Assert.AreEqual("hello", state.Blackboard().Get<string>("write"));
         }
 
         public partial class ListChild : Arbor.Node
@@ -72,39 +93,98 @@ namespace ArborTest
             }
         }
 
+        public class RegistrationFailureTree : Arbor.TreeDec.ITreeFactory
+        {
+            public Node Create()
+            {
+                return new ListChild();
+            }
+        }
+
         [Test]
         public void RegistrationFailure()
         {
-            Arbor.Tree tree = new Arbor.Tree(new ListChild(
-            ));
+            UpdateTestParameters(new Dec.Config.UnitTestParameters { explicitTypes = new System.Type[] { typeof(RegistrationFailureTree) } });
 
-            ExpectErrors(() => tree.Blackboard().Set<string>("read", "hello"));
+            var parser = new Dec.Parser();
+            parser.AddString(Dec.Parser.FileType.Xml, @"
+                <Decs>
+                    <Arbor.TreeDec decName=""Test"">
+                        <worker class=""ArborTest.Parameter.RegistrationFailureTree"" />
+                    </Arbor.TreeDec>
+                </Decs>
+            ");
+            parser.Finish();
+
+            var state = new Arbor.State(Dec.Database<Arbor.TreeDec>.Get("Test"));
+
+            ExpectErrors(() => state.Blackboard().Set<string>("read", "hello"));
+        }
+
+        public class RegistrationListTree : Arbor.TreeDec.ITreeFactory
+        {
+            public Node Create()
+            {
+                return new ListChild(
+                    new ParameterTestNode() {
+                        ReadId = Arbor.BlackboardParameter<string>.Tree("read"),
+                        WriteId = Arbor.BlackboardParameter<string>.Tree("write"),
+                    }
+                );
+            }
         }
 
         [Test]
         public void RegistrationList()
         {
-            Arbor.Tree tree = new Arbor.Tree(new ListChild(
-                new ParameterTestNode() {
-                    ReadId = Arbor.BlackboardParameter<string>.Tree("read"),
-                    WriteId = Arbor.BlackboardParameter<string>.Tree("write"),
-                }
-            ));
+            UpdateTestParameters(new Dec.Config.UnitTestParameters { explicitTypes = new System.Type[] { typeof(RegistrationListTree) } });
 
-            tree.Blackboard().Set<string>("read", "hello");
+            var parser = new Dec.Parser();
+            parser.AddString(Dec.Parser.FileType.Xml, @"
+                <Decs>
+                    <Arbor.TreeDec decName=""Test"">
+                        <worker class=""ArborTest.Parameter.RegistrationListTree"" />
+                    </Arbor.TreeDec>
+                </Decs>
+            ");
+            parser.Finish();
+
+            var state = new Arbor.State(Dec.Database<Arbor.TreeDec>.Get("Test"));
+
+            state.Blackboard().Set<string>("read", "hello");
+        }
+
+        public class RegistrationArrayTree : Arbor.TreeDec.ITreeFactory
+        {
+            public Node Create()
+            {
+                return new ArrayChild(
+                    new ParameterTestNode() {
+                        ReadId = Arbor.BlackboardParameter<string>.Tree("read"),
+                        WriteId = Arbor.BlackboardParameter<string>.Tree("write"),
+                    }
+                );
+            }
         }
 
         [Test]
         public void RegistrationArray()
         {
-            Arbor.Tree tree = new Arbor.Tree(new ArrayChild(
-                new ParameterTestNode() {
-                    ReadId = Arbor.BlackboardParameter<string>.Tree("read"),
-                    WriteId = Arbor.BlackboardParameter<string>.Tree("write"),
-                }
-            ));
+            UpdateTestParameters(new Dec.Config.UnitTestParameters { explicitTypes = new System.Type[] { typeof(RegistrationArrayTree) } });
 
-            tree.Blackboard().Set<string>("read", "hello");
+            var parser = new Dec.Parser();
+            parser.AddString(Dec.Parser.FileType.Xml, @"
+                <Decs>
+                    <Arbor.TreeDec decName=""Test"">
+                        <worker class=""ArborTest.Parameter.RegistrationArrayTree"" />
+                    </Arbor.TreeDec>
+                </Decs>
+            ");
+            parser.Finish();
+
+            var state = new Arbor.State(Dec.Database<Arbor.TreeDec>.Get("Test"));
+
+            state.Blackboard().Set<string>("read", "hello");
         }
     }
 }

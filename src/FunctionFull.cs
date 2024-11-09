@@ -21,12 +21,5 @@ namespace Arbor
                 yield return func();
             }
         }
-
-        public override void Record(Dec.Recorder recorder)
-        {
-            base.Record(recorder);
-
-            recorder.Record(ref func, nameof(func));
-        }
     }
 }

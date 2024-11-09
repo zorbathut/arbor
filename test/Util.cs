@@ -4,7 +4,6 @@ using System.Collections.Generic;
 
 namespace ArborTest
 {
-    [Dec.RecorderEnumerator.RecordableClosures]
     public partial class ResultFunction : Node
     {
         private Func<Result> condition;
@@ -22,13 +21,6 @@ namespace ArborTest
             {
                 yield return condition();
             }
-        }
-
-        public override void Record(Dec.Recorder recorder)
-        {
-            base.Record(recorder);
-
-            recorder.Record(ref condition, nameof(condition));
         }
     }
 
