@@ -1,6 +1,7 @@
 
 namespace Arbor
 {
+    [Dec.CloneStructPiecewise]
     internal struct BlackboardIdentifier : Dec.IRecordable
     {
         public string id;
@@ -11,6 +12,7 @@ namespace Arbor
         }
     }
 
+    [Dec.CloneStructPiecewise]
     public struct BlackboardParameter<T> : Dec.IRecordable
     {
         BlackboardIdentifier? identifier;
