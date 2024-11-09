@@ -28,7 +28,7 @@ namespace Arbor
 
             if (worker == null)
             {
-                reporter("Worker is null");
+                reporter("Worker is null; at the moment this is mandatory");
                 return;
             }
 
