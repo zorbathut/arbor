@@ -13,11 +13,6 @@ namespace Arbor
             Node Create();
         }
 
-        public interface IStateInitializer
-        {
-            void Init(State state);
-        }
-
         [NonSerialized]
         internal Node root;
 

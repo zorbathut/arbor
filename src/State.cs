@@ -47,11 +47,6 @@ namespace Arbor
 
             // get a copy of the blackboard
             blackboard = Dec.Recorder.Clone(tree.blackboardDescriptor);
-
-            if (tree.worker is TreeDec.IStateInitializer initializer)
-            {
-                initializer.Init(this);
-            }
         }
 
         public void Update()
