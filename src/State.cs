@@ -6,7 +6,7 @@ namespace Arbor
     public class State : Dec.IRecordable
     {
         public static System.Threading.ThreadLocal<State> Current = new();
-        private struct Scope : System.IDisposable
+        public struct Scope : System.IDisposable
         {
             private State old;
             private State current;
