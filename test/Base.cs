@@ -27,6 +27,7 @@ namespace ArborTest
 
         private bool handlingErrors = false;
         private bool handledError = false;
+        private Func<string, bool> errorValidator = null;
 
         [OneTimeSetUp]
         public void PrepHooks()
@@ -50,6 +51,13 @@ namespace ArborTest
             Arbor.Config.ErrorHandler = str => {
                 System.Diagnostics.Debug.Print(str);
                 Console.WriteLine(str);
+
+                // we forgot to do the string interpolation correctly
+                Assert.IsFalse(str.Contains("{"));
+                Assert.IsFalse(str.Contains("}"));
+
+                // Check to see if this is considered a "valid" error.
+                Assert.IsTrue(errorValidator == null || errorValidator(str), $"Error message validation failed: {str}");
 
                 if (handlingErrors)
                 {
@@ -91,11 +99,12 @@ namespace ArborTest
             handledWarning = false;
         }
 
-        protected void ExpectErrors(Action action)
+        protected void ExpectErrors(Action action, Func<string, bool> errorValidator = null)
         {
             Assert.IsFalse(handlingErrors);
             handlingErrors = true;
             handledError = false;
+            this.errorValidator = errorValidator;
 
             action();
 
@@ -103,6 +112,7 @@ namespace ArborTest
             Assert.IsTrue(handledError);
             handlingErrors = false;
             handledError = false;
+            this.errorValidator = null;
         }
 
         public enum CloneBehavior

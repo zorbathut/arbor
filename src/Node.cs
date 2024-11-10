@@ -18,8 +18,16 @@ namespace Arbor
         private bool initted;
         private int nodeIndex = -1;
 
+        internal static bool initRunning = false;
+
         public void Init(Blackboard blackboardDescriptor, List<Node> nodeList)
         {
+            if (!initRunning)
+            {
+                Dbg.Err("Init must be called from within a full tree init; individual nodes cannot be initted independently!");
+                return;
+            }
+
             if (initted)
             {
                 Dbg.Err("Initted multiple times");

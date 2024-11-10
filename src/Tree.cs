@@ -46,8 +46,11 @@ namespace Arbor
 
             root = (worker as ITreeFactory).Create(blackboardDescriptor);
 
+            // right now this really does not support parallelism but that's OK
+            Node.initRunning = true;
             var nodeList = new List<Node>();
             root?.Init(blackboardDescriptor, nodeList);
+            Node.initRunning = false;
 
             // for the sake of a little extra efficiency
             nodes = nodeList.ToArray();
