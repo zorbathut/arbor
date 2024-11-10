@@ -8,6 +8,8 @@ namespace Arbor
         private Dictionary<string, object> data = new Dictionary<string, object>();
         private Dictionary<string, Type> types = new Dictionary<string, Type>();
 
+        internal static bool writeOnly = false;
+
         public void Register(string id, Type type)
         {
             if (types.ContainsKey(id))
@@ -26,6 +28,13 @@ namespace Arbor
 
         public T Get<T>(string id)
         {
+            if (writeOnly)
+            {
+                Dbg.Err(
+                    "Attempting to read from Blackboard during initialization; this is not allowed because trees may override blackboard values");
+                return default;
+            }
+
             if (!types.ContainsKey(id))
             {
                 Dbg.Err($"Parameter `{id}` is not a known blackboard parameter; when building the tree, either include it as part of an Arbor.Node or register it with `BlackboardParameter<>.RegisterWith()`");

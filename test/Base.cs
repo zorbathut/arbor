@@ -145,4 +145,20 @@ namespace ArborTest
             }
         }
     }
+
+    public partial class Fail : Arbor.Node
+    {
+        public override System.Collections.Generic.IEnumerable<Arbor.Result> Worker()
+        {
+            yield return Arbor.Result.Failure;
+        }
+    }
+
+    public partial class Succeed : Arbor.Node
+    {
+        public override System.Collections.Generic.IEnumerable<Arbor.Result> Worker()
+        {
+            yield return Arbor.Result.Success;
+        }
+    }
 }

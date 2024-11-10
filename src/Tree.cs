@@ -44,6 +44,7 @@ namespace Arbor
 
             blackboardDescriptor = new Blackboard();
 
+            Blackboard.writeOnly = true;
             root = (worker as ITreeFactory).Create(blackboardDescriptor);
 
             // right now this really does not support parallelism but that's OK
@@ -51,6 +52,8 @@ namespace Arbor
             var nodeList = new List<Node>();
             root?.Init(blackboardDescriptor, nodeList);
             Node.initRunning = false;
+
+            Blackboard.writeOnly = false;
 
             // for the sake of a little extra efficiency
             nodes = nodeList.ToArray();
