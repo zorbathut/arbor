@@ -1,6 +1,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace Arbor
 {
@@ -57,6 +58,11 @@ namespace Arbor
 
             // for the sake of a little extra efficiency
             nodes = nodeList.ToArray();
+
+            if (nodes.Distinct().Count() != nodes.Length)
+            {
+                reporter("Nodes used multiple times in tree, each node must have exactly one parent");
+            }
 
             // do this manually (this is ugly!)
             var arrayPath = new Dec.PathMember(new Dec.PathDec(typeof(TreeDec), DecName), "nodeList");
