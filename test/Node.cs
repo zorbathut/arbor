@@ -28,3 +28,14 @@ namespace ArborTest
         }
     }
 }
+
+// this isn't even a test fixture, we're just making sure it compiles
+public partial class NamespacelessTestNode : Arbor.Node
+{
+    public Arbor.BlackboardParameter<int> ParameterId = new Arbor.BlackboardParameter<int>();
+
+    public override IEnumerable<Result> Worker()
+    {
+        yield return Result.Success;
+    }
+}

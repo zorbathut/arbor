@@ -35,13 +35,13 @@ namespace Arbor
             foreach (var type in context.Compilation.SyntaxTrees.SelectMany(tree =>
                 tree.GetRoot().DescendantNodes().OfType<Microsoft.CodeAnalysis.CSharp.Syntax.ClassDeclarationSyntax>().Select(cds => context.Compilation.GetSemanticModel(tree).GetDeclaredSymbol(cds)).Where(type => type.InheritsFrom(arborNodeType))))
             {
-                var nodeNamespace = type.ContainingNamespace?.ToDisplayString(fullyQualified);
+                var nodeNamespace = type.ContainingNamespace.ToDisplayString(fullyQualified);
 
                 bool foundSomething = false;
 
                 var source = new System.Text.StringBuilder();
                 source.AppendLine("using System.Collections.Generic;");
-                if (nodeNamespace != null)
+                if (nodeNamespace != "")
                 {
                     source.AppendLine($"namespace {nodeNamespace} {{");
                 }
@@ -141,7 +141,7 @@ namespace Arbor
                     source.AppendLine($"}}");
                 }
 
-                if (nodeNamespace != null)
+                if (nodeNamespace != "")
                 {
                     source.AppendLine($"}}");
                 }
