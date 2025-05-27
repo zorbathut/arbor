@@ -45,7 +45,7 @@ namespace Arbor
             enumerators = new IEnumerator<Result>[tree.nodes.Length];
             active = new List<int>();
 
-            // get a copy of the blackboard
+            // get a copy of the initial blackboard
             blackboard = Dec.Recorder.Clone(tree.blackboardDescriptor);
         }
 
@@ -139,14 +139,14 @@ namespace Arbor
             return blackboard;
         }
 
-        internal T BlackboardGet<T>(BlackboardIdentifier identifier)
+        internal T BlackboardGet<T>(BlackboardParameter<T> identifier)
         {
-            return blackboard.Get<T>(identifier.id);
+            return blackboard.Get(identifier);
         }
 
-        internal void BlackboardSet<T>(BlackboardIdentifier identifier, T item)
+        internal void BlackboardSet<T>(BlackboardParameter<T> identifier, T item)
         {
-            blackboard.Set<T>(identifier.id, item);
+            blackboard.Set(identifier, item);
         }
 
         public void Record(Dec.Recorder recorder)

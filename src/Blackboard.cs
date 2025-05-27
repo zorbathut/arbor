@@ -5,29 +5,44 @@ namespace Arbor
 {
     public class Blackboard : Dec.IRecordable
     {
-        private Dictionary<string, object> data = new Dictionary<string, object>();
-        private Dictionary<string, Type> types = new Dictionary<string, Type>();
+        private Dictionary<ulong, object> data = new Dictionary<ulong, object>();
+        private Dictionary<ulong, string> labels = new Dictionary<ulong, string>();
+        private Dictionary<ulong, Type> types = new Dictionary<ulong, Type>();
 
         internal static bool writeOnly = false;
 
-        public void Register(string id, Type type)
+        public void Register<T>(BlackboardParameter<T> id)
         {
-            if (types.ContainsKey(id))
+            if (id.identifier == null)
             {
-                if (types[id] != type)
+                Dbg.Err("Attempted to register a blackboard parameter from a constant");
+                return;
+            }
+
+            var uid = id.identifier.Value.uid;
+            if (types.ContainsKey(uid))
+            {
+                if (types[uid] != typeof(T))
                 {
-                    Dbg.Err($"Type mismatch: parameter `{id}` is registered as {types[id]} but being accessed as {type}");
+                    Dbg.Err($"Type mismatch: parameter `{id}` is registered as {types[uid]} but being accessed as {typeof(T)}");
                     return;
                 }
             }
             else
             {
-                types[id] = type;
+                labels[uid] = id.identifier.Value.label;
+                types[uid] = typeof(T);
             }
         }
 
-        public T Get<T>(string id)
+        public T Get<T>(BlackboardParameter<T> id)
         {
+            if (id.identifier == null)
+            {
+                Dbg.Err("Attempted to get a blackboard parameter from a constant");
+                return default;
+            }
+
             if (writeOnly)
             {
                 Dbg.Err(
@@ -35,19 +50,20 @@ namespace Arbor
                 return default;
             }
 
-            if (!types.ContainsKey(id))
+            var uid = id.identifier.Value.uid;
+            if (!types.ContainsKey(uid))
             {
                 Dbg.Err($"Parameter `{id}` is not a known blackboard parameter; when building the tree, either include it as part of an Arbor.Node or register it with `BlackboardParameter<>.RegisterWith()`");
                 return default;
             }
 
-            if (types[id] != typeof(T))
+            if (types[uid] != typeof(T))
             {
-                Dbg.Err($"Type mismatch: parameter `{id}` is registered as {types[id]} but being accessed as {typeof(T)}");
+                Dbg.Err($"Type mismatch: parameter `{id}` is registered as {types[uid]} but being accessed as {typeof(T)}");
                 return default;
             }
 
-            data.TryGetValue(id, out object result);
+            data.TryGetValue(uid, out object result);
             if (result != null)
             {
                 return (T)result;
@@ -56,47 +72,60 @@ namespace Arbor
             return default;
         }
 
-        public void Set<T>(string id, T item)
+        public void Set<T>(BlackboardParameter<T> id, T item)
         {
-            if (!types.ContainsKey(id))
+            if (id.identifier == null)
+            {
+                Dbg.Err("Attempted to set a blackboard parameter from a constant");
+                return;
+            }
+
+            var uid = id.identifier.Value.uid;
+            if (!types.ContainsKey(uid))
             {
                 Dbg.Err($"Parameter `{id}` is not a known blackboard parameter; when building the tree, either include it as part of an Arbor.Node or register it with `BlackboardParameter<>.RegisterWith()`");
                 return;
             }
 
-            if (types[id] != typeof(T))
+            if (types[uid] != typeof(T))
             {
-                Dbg.Err($"Type mismatch: parameter `{id}` is registered as {types[id]} but being accessed as {typeof(T)}");
+                Dbg.Err($"Type mismatch: parameter `{id}` is registered as {types[uid]} but being accessed as {typeof(T)}");
                 return;
             }
 
-            data[id] = item;
+            data[uid] = item;
         }
 
-        public void RegisterAndSet<T>(string id, T item)
+        public void RegisterAndSet<T>(BlackboardParameter<T> id, T item)
         {
-            Register(id, typeof(T));
+            Register(id);
             Set(id, item);
         }
 
         public IEnumerable<KeyValuePair<string, object>> GetAll_Debug()
         {
-            // splice in the types as default objects
-            var dataCopy = new Dictionary<string, object>(data);
+            // note: data may be empty, this is permitted!
+            // unfortunately we can't just do `default` because this is object world
             foreach (var kvp in types)
             {
-                if (!dataCopy.ContainsKey(kvp.Key))
+                if (data.TryGetValue(kvp.Key, out var value))
                 {
-                    dataCopy[kvp.Key] = kvp.Value.IsValueType ? Activator.CreateInstance(kvp.Value) : null;
+                    yield return new KeyValuePair<string, object>(labels[kvp.Key], value);
+                }
+                else
+                {
+                    // if the data is missing, we return a default value of the type
+                    yield return new KeyValuePair<string, object>(labels[kvp.Key], Activator.CreateInstance(kvp.Value));
                 }
             }
-
-            return dataCopy;
         }
 
         public void Record(Dec.Recorder recorder)
         {
+            // this is not yet valid for long-term persistence, fix later
+            // (we'll have to, what, convert it to/from canonical form according to the associated tree?)
             recorder.Record(ref data, nameof(data));
+            recorder.Record(ref labels, nameof(labels));
             recorder.Record(ref types, nameof(types));
         }
     }

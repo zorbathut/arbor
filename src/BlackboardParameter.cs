@@ -4,23 +4,27 @@ namespace Arbor
     [Dec.CloneStructPiecewise]
     internal struct BlackboardIdentifier : Dec.IRecordable
     {
-        public string id;
+        public ulong uid;
+        public string label;
 
         public void Record(Dec.Recorder recorder)
         {
-            recorder.Record(ref id, nameof(id));
+            recorder.Record(ref uid, nameof(uid));
+            recorder.Record(ref label, nameof(label));
         }
     }
 
     [Dec.CloneStructPiecewise]
     public struct BlackboardParameter<T> : Dec.IRecordable
     {
-        BlackboardIdentifier? identifier;
-        T constant;
+        internal BlackboardIdentifier? identifier;
+        internal T constant;
+
+        private static ulong s_uid = 0;    // always interlocked
 
         public static BlackboardParameter<T> Tree(string id)
         {
-            return new BlackboardParameter<T> { identifier = new BlackboardIdentifier{ id = id } };
+            return new BlackboardParameter<T> { identifier = new BlackboardIdentifier{ uid = System.Threading.Interlocked.Increment(ref s_uid), label = id } };
         }
 
         public static BlackboardParameter<T> Constant(T initial)
@@ -32,7 +36,7 @@ namespace Arbor
         {
             if (identifier.HasValue)
             {
-                return State.Current.Value.BlackboardGet<T>(identifier.Value);
+                return State.Current.Value.BlackboardGet<T>(this);
             }
             else
             {
@@ -44,19 +48,11 @@ namespace Arbor
         {
             if (identifier.HasValue)
             {
-                State.Current.Value.BlackboardSet<T>(identifier.Value, value);
+                State.Current.Value.BlackboardSet<T>(this, value);
             }
             else
             {
                 Dbg.Err("Attempted to set a constant blackboard parameter");
-            }
-        }
-
-        public void RegisterWith(Blackboard blackboard)
-        {
-            if (identifier.HasValue)
-            {
-                blackboard.Register(identifier.Value.id, typeof(T));
             }
         }
 

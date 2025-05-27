@@ -24,12 +24,15 @@ namespace ArborTest
 
         public class BasicTree : Arbor.TreeDec.ITreeFactory
         {
+            public static BlackboardParameter<string> read = BlackboardParameter<string>.Tree("read");
+            public static BlackboardParameter<string> write = BlackboardParameter<string>.Tree("write");
+
             public Node Create(Blackboard blackboardDescriptor)
             {
                 return new ParameterTestNode()
                 {
-                    ReadId = Arbor.BlackboardParameter<string>.Tree("read"),
-                    WriteId = Arbor.BlackboardParameter<string>.Tree("write"),
+                    ReadId = read,
+                    WriteId = write,
                 };
             }
         }
@@ -51,14 +54,14 @@ namespace ArborTest
 
             var state = new Arbor.State(Dec.Database<Arbor.TreeDec>.Get("Test"));
 
-            state.Blackboard().Set<string>("read", "hello");
-            state.Blackboard().Set<string>("write", "goodbye");
+            state.Blackboard().Set<string>(BasicTree.read, "hello");
+            state.Blackboard().Set<string>(BasicTree.write, "goodbye");
 
-            Assert.AreEqual("goodbye", state.Blackboard().Get<string>("write"));
+            Assert.AreEqual("goodbye", state.Blackboard().Get<string>(BasicTree.write));
 
             state.Update();
 
-            Assert.AreEqual("hello", state.Blackboard().Get<string>("write"));
+            Assert.AreEqual("hello", state.Blackboard().Get<string>(BasicTree.write));
         }
 
         public partial class ListChild : Arbor.Node
@@ -118,17 +121,20 @@ namespace ArborTest
 
             var state = new Arbor.State(Dec.Database<Arbor.TreeDec>.Get("Test"));
 
-            ExpectErrors(() => state.Blackboard().Set<string>("read", "hello"));
+            ExpectErrors(() => state.Blackboard().Set<string>(BlackboardParameter<string>.Tree("write"), "hello"));
         }
 
         public class RegistrationListTree : Arbor.TreeDec.ITreeFactory
         {
+            public static BlackboardParameter<string> read = BlackboardParameter<string>.Tree("read");
+            public static BlackboardParameter<string> write = BlackboardParameter<string>.Tree("write");
+
             public Node Create(Blackboard blackboardDescriptor)
             {
                 return new ListChild(
                     new ParameterTestNode() {
-                        ReadId = Arbor.BlackboardParameter<string>.Tree("read"),
-                        WriteId = Arbor.BlackboardParameter<string>.Tree("write"),
+                        ReadId = read,
+                        WriteId = write,
                     }
                 );
             }
@@ -151,17 +157,20 @@ namespace ArborTest
 
             var state = new Arbor.State(Dec.Database<Arbor.TreeDec>.Get("Test"));
 
-            state.Blackboard().Set<string>("read", "hello");
+            state.Blackboard().Set<string>(RegistrationListTree.read, "hello");
         }
 
         public class RegistrationArrayTree : Arbor.TreeDec.ITreeFactory
         {
+            public static BlackboardParameter<string> read = BlackboardParameter<string>.Tree("read");
+            public static BlackboardParameter<string> write = BlackboardParameter<string>.Tree("write");
+
             public Node Create(Blackboard blackboardDescriptor)
             {
                 return new ArrayChild(
                     new ParameterTestNode() {
-                        ReadId = Arbor.BlackboardParameter<string>.Tree("read"),
-                        WriteId = Arbor.BlackboardParameter<string>.Tree("write"),
+                        ReadId = read,
+                        WriteId = write,
                     }
                 );
             }
@@ -184,7 +193,7 @@ namespace ArborTest
 
             var state = new Arbor.State(Dec.Database<Arbor.TreeDec>.Get("Test"));
 
-            state.Blackboard().Set<string>("read", "hello");
+            state.Blackboard().Set<string>(RegistrationArrayTree.read, "hello");
         }
     }
 }

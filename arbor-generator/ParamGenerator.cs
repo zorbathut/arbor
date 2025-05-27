@@ -88,7 +88,7 @@ namespace Arbor
                             source.AppendLine($"  set => {bbp.Name}.Set(value);");
                             source.AppendLine($"}}");
 
-                            initFields.AppendLine($"{bbp.Name}.RegisterWith(blackboardDescriptor);");
+                            initFields.AppendLine($"blackboardDescriptor.Register({bbp.Name});");
                         }
 
                         // Check to see if this is derived from a Node

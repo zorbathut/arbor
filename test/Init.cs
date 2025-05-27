@@ -27,12 +27,14 @@ namespace ArborTest
 
         public class WriteOnlyTestTree : TreeDec.ITreeFactory
         {
+            public static BlackboardParameter<string> testParameter = BlackboardParameter<string>.Tree("test");
+            public static BlackboardParameter<int> horseParameter = BlackboardParameter<int>.Tree("horse");
+
             public Node Create(Blackboard blackboardDescriptor)
             {
-                var bbItem = BlackboardParameter<string>.Tree("test");
-                bbItem.RegisterWith(blackboardDescriptor);
+                blackboardDescriptor.Register(testParameter);
 
-                int x = blackboardDescriptor.Get<int>("horse");
+                int x = blackboardDescriptor.Get<int>(horseParameter);
 
                 return new Succeed();
             }
@@ -57,9 +59,9 @@ namespace ArborTest
 
             // Verify normal reads work after initialization
             var tree = Dec.Database<TreeDec>.Get("Test");
-            var state = new State(Dec.Database<TreeDec>.Get("Test"));
-            state.Blackboard().Set("test", "value");
-            Assert.AreEqual("value", state.Blackboard().Get<string>("test"));
+            var state = new State(tree);
+            state.Blackboard().Set(WriteOnlyTestTree.testParameter, "value");
+            Assert.AreEqual("value", state.Blackboard().Get<string>(WriteOnlyTestTree.testParameter));
         }
     }
 }
