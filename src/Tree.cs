@@ -21,7 +21,7 @@ namespace Arbor
         internal Node[] nodes;
 
         // Serialization help functionality
-        [NonSerialized] internal List<(Type type, string name)> blackboardRegistrations = new List<(Type type, string name)>();
+        [NonSerialized] internal List<(Type type, string name)> blackboardRegistrations = new();
         [NonSerialized] internal ulong blackboardSignature = 0;
 
         [NonSerialized] internal Blackboard blackboardTemplate;
