@@ -19,7 +19,7 @@ namespace ArborTest
             }
         }
 
-        public class ParameterA : Arbor.TreeDec.ITreeFactory
+        public class ParameterTreeA : Arbor.TreeDec.ITreeFactory
         {
             public static BlackboardParameter<string> data = BlackboardParameter<string>.Tree("data");
 
@@ -29,7 +29,7 @@ namespace ArborTest
             }
         }
 
-        public class ParameterB : Arbor.TreeDec.ITreeFactory
+        public class ParameterTreeB : Arbor.TreeDec.ITreeFactory
         {
             public static BlackboardParameter<string> data = BlackboardParameter<string>.Tree("data");
 
@@ -39,9 +39,52 @@ namespace ArborTest
             }
         }
 
+        [Test]
+        public void ChangedUid()
+        {
+            UpdateTestParameters(new Dec.Config.UnitTestParameters { explicitTypes = new System.Type[] { typeof(ParameterTreeA), typeof(ParameterTreeB) } });
 
+            {
+                var parser = new Dec.Parser();
+                parser.AddString(Dec.Parser.FileType.Xml, @"
+                    <Decs>
+                        <Arbor.TreeDec decName=""Test"">
+                            <worker class=""ArborTest.Serialization.ParameterTreeA"" />
+                        </Arbor.TreeDec>
+                    </Decs>
+                ");
+                parser.Finish();
+            }
 
+            string serialized;
+            {
+                var state = new Arbor.State(Dec.Database<Arbor.TreeDec>.Get("Test"));
+                state.Blackboard().Set(ParameterTreeA.data, "banjo");
 
+                serialized = Dec.Recorder.Write(state);
+            }
 
+            Dec.Database.Clear();
+
+            {
+                var parser = new Dec.Parser();
+                parser.AddString(Dec.Parser.FileType.Xml, @"
+                    <Decs>
+                        <Arbor.TreeDec decName=""Test"">
+                            <worker class=""ArborTest.Serialization.ParameterTreeB"" />
+                        </Arbor.TreeDec>
+                    </Decs>
+                ");
+                parser.Finish();
+            }
+
+            {
+                var newState = Dec.Recorder.Read<Arbor.State>(serialized);
+                Assert.AreEqual("banjo", newState.Blackboard().Get(ParameterTreeB.data));
+                newState.Blackboard().Set(ParameterTreeB.data, "newBanjo");
+            }
+
+            Assert.AreNotEqual(ParameterTreeA.data, ParameterTreeB.data);
+        }
     }
 }

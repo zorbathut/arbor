@@ -22,6 +22,8 @@ namespace Arbor
 
         // Serialization help functionality
         [NonSerialized] internal List<(Type type, string name)> blackboardRegistrations = new();
+        [NonSerialized] internal List<BlackboardIdentifier> blackboardLocalId = new();
+        [NonSerialized] internal Dictionary<ulong, int> blackboardLocalIdLookup = new Dictionary<ulong, int>();
         [NonSerialized] internal ulong blackboardSignature = 0;
 
         [NonSerialized] internal Blackboard blackboardTemplate;
@@ -42,6 +44,8 @@ namespace Arbor
 
             // add to our ordered list
             blackboardRegistrations.Add((typeof(T), id.identifier.Value.label));
+            blackboardLocalIdLookup[id.identifier.Value.uid] = blackboardLocalId.Count;
+            blackboardLocalId.Add(id.identifier.Value);
 
             blackboardTemplate.Register(id);
         }

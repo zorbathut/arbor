@@ -9,8 +9,23 @@ namespace Arbor
 
         public void Record(Dec.Recorder recorder)
         {
-            recorder.Record(ref uid, nameof(uid));
-            recorder.Record(ref label, nameof(label));
+            if (recorder.Mode == Dec.Recorder.Direction.Read)
+            {
+                // Get the ID
+                int id = 0;
+                recorder.RecordAsThis(ref id);
+
+                // Remap this according to our state's tree's remap
+                var assign = State.Current.Value.tree.blackboardLocalId[id];
+                uid = assign.uid;
+                label = assign.label;
+            }
+            else
+            {
+                // Store the lookup ID
+                int id = State.Current.Value.tree.blackboardLocalIdLookup[uid];
+                recorder.RecordAsThis(ref id);
+            }
         }
     }
 

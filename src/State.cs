@@ -25,7 +25,7 @@ namespace Arbor
         }
 
         // the tree we refer to
-        private Arbor.TreeDec tree;
+        internal Arbor.TreeDec tree;
 
         // local state
         internal IEnumerator<Result>[] enumerators;
@@ -42,11 +42,7 @@ namespace Arbor
         {
             this.tree = tree;
 
-            enumerators = new IEnumerator<Result>[tree.nodes.Length];
-            active = new List<int>();
-
-            // get a copy of the initial blackboard
-            blackboard = Dec.Recorder.Clone(tree.blackboardTemplate);
+            ResetToStart();
         }
 
         internal static State ForSetup(TreeDec tree)
@@ -55,6 +51,15 @@ namespace Arbor
             state.tree = tree;
             state.blackboard = tree.blackboardTemplate; // crosslinked
             return state;
+        }
+
+        private void ResetToStart()
+        {
+            enumerators = new IEnumerator<Result>[tree.nodes.Length];
+            active = new List<int>();
+
+            // get a copy of the initial blackboard
+            blackboard = Dec.Recorder.Clone(tree.blackboardTemplate);
         }
 
         public void Update()
@@ -159,7 +164,40 @@ namespace Arbor
 
         public void Record(Dec.Recorder recorder)
         {
+            // this ends up being complicated
+            if (recorder.Intent == Dec.Recorder.Purpose.Cloning)
+            {
+                // just copy it all over
+                recorder.Record(ref tree, nameof(tree));
+                recorder.Record(ref enumerators, nameof(enumerators));
+                recorder.Record(ref blackboard, nameof(blackboard));
+                recorder.Record(ref active, nameof(active));
+                return;
+            }
+
             recorder.Record(ref tree, nameof(tree));
+
+            if (recorder.Mode == Dec.Recorder.Direction.Write)
+            {
+                recorder.Record(ref tree.blackboardSignature, "signature");
+            }
+            else if (recorder.Mode == Dec. Recorder.Direction.Read)
+            {
+                ulong sig = 0;
+                recorder.Record(ref sig, "signature");
+
+                if (sig != tree.blackboardSignature)
+                {
+                    Dbg.Wrn("Blackboard signature mismatch; this is likely due to a change in the tree structure or blackboard parameters. Resetting.");
+
+                    ResetToStart();
+                    return;
+                }
+            }
+
+            // this is needed for identifier serialization
+            using var scope = new Scope(this);
+
             recorder.Record(ref enumerators, nameof(enumerators));
             recorder.Record(ref blackboard, nameof(blackboard));
             recorder.Record(ref active, nameof(active));
