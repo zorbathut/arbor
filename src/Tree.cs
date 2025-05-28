@@ -11,7 +11,7 @@ namespace Arbor
 
         public interface ITreeFactory
         {
-            Node Create(Blackboard blackboardDescriptor);
+            Node Create(TreeDec treeDec);
         }
 
         [NonSerialized]
@@ -20,8 +20,31 @@ namespace Arbor
         [NonSerialized]
         internal Node[] nodes;
 
-        [NonSerialized]
-        internal Blackboard blackboardDescriptor;
+        // Serialization help functionality
+        [NonSerialized] internal List<(Type type, string name)> blackboardRegistrations = new List<(Type type, string name)>();
+        [NonSerialized] internal ulong blackboardSignature = 0;
+
+        [NonSerialized] internal Blackboard blackboardTemplate;
+
+        public void BlackboardRegister<T>(BlackboardParameter<T> id)
+        {
+            if (id.identifier == null)
+            {
+                Dbg.Err("Attempted to register a blackboard parameter from a constant");
+                return;
+            }
+
+            if (blackboardSignature != 0)
+            {
+                Dbg.Err("Cannot add more blackboard parameters after the tree has been loaded");
+                return;
+            }
+
+            // add to our ordered list
+            blackboardRegistrations.Add((typeof(T), id.identifier.Value.label));
+
+            blackboardTemplate.Register(id);
+        }
 
         public override void ConfigErrors(Action<string> reporter)
         {
@@ -43,20 +66,36 @@ namespace Arbor
         {
             base.PostLoad(reporter);
 
-            blackboardDescriptor = new Blackboard();
+            // make our template
+            blackboardTemplate = new Blackboard();
 
-            Blackboard.writeOnly = true;
-            root = (worker as ITreeFactory).Create(blackboardDescriptor);
-
-            // right now this really does not support parallelism but that's OK
-            Node.initRunning = true;
+            // create the actual tree structure
             var nodeList = new List<Node>();
-            root?.Init(blackboardDescriptor, nodeList);
-            Node.initRunning = false;
+            try
+            {
+                Blackboard.writeOnly = true;
+                {
+                    // this is excruciatingly hacky
+                    using var scope = new State.Scope(State.ForSetup(this));
 
-            Blackboard.writeOnly = false;
+                    root = (worker as ITreeFactory).Create(this);
+                }
 
-            // for the sake of a little extra efficiency
+                // run all the initialization/registration code
+                // right now this really does not support parallelism but that's OK
+                Node.initRunning = true;
+                root?.Init(this, nodeList);
+            }
+            finally
+            {
+                Node.initRunning = false;
+                Blackboard.writeOnly = false;
+            }
+
+            // register blackboard hash
+            blackboardSignature = Dec.Recorder.Checksum(blackboardRegistrations);
+
+            // for the sake of a little extra long-term efficiency
             nodes = nodeList.ToArray();
 
             if (nodes.Distinct().Count() != nodes.Length)

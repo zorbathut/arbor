@@ -27,7 +27,7 @@ namespace ArborTest
             public static BlackboardParameter<string> read = BlackboardParameter<string>.Tree("read");
             public static BlackboardParameter<string> write = BlackboardParameter<string>.Tree("write");
 
-            public Node Create(Blackboard blackboardDescriptor)
+            public Node Create(TreeDec tree)
             {
                 return new ParameterTestNode()
                 {
@@ -98,7 +98,7 @@ namespace ArborTest
 
         public class RegistrationFailureTree : Arbor.TreeDec.ITreeFactory
         {
-            public Node Create(Blackboard blackboardDescriptor)
+            public Node Create(TreeDec tree)
             {
                 return new ListChild();
             }
@@ -129,7 +129,7 @@ namespace ArborTest
             public static BlackboardParameter<string> read = BlackboardParameter<string>.Tree("read");
             public static BlackboardParameter<string> write = BlackboardParameter<string>.Tree("write");
 
-            public Node Create(Blackboard blackboardDescriptor)
+            public Node Create(TreeDec tree)
             {
                 return new ListChild(
                     new ParameterTestNode() {
@@ -165,7 +165,7 @@ namespace ArborTest
             public static BlackboardParameter<string> read = BlackboardParameter<string>.Tree("read");
             public static BlackboardParameter<string> write = BlackboardParameter<string>.Tree("write");
 
-            public Node Create(Blackboard blackboardDescriptor)
+            public Node Create(TreeDec tree)
             {
                 return new ArrayChild(
                     new ParameterTestNode() {

@@ -11,32 +11,34 @@ namespace ArborTest
     {
         public partial class ReadDuringInitNode : Node
         {
-            public BlackboardParameter<string> ReadId = BlackboardParameter<string>.Tree("test");
-            private bool readDuringInit = false;
+            public BlackboardParameter<int> ReadId;
+
+            public int DoRead()
+            {
+                return Read;
+            }
 
             public override IEnumerable<Result> Worker()
             {
-                if (!readDuringInit)
-                {
-                    // Attempt to read during init
-                    var nothing = Read;
-                }
                 yield return Result.Success;
             }
         }
 
-        public class WriteOnlyTestTree : TreeDec.ITreeFactory
+        public partial class WriteOnlyTestTree : TreeDec.ITreeFactory
         {
             public static BlackboardParameter<string> testParameter = BlackboardParameter<string>.Tree("test");
-            public static BlackboardParameter<int> horseParameter = BlackboardParameter<int>.Tree("horse");
+            public static BlackboardParameter<int> readParameter = BlackboardParameter<int>.Tree("horse");
 
-            public Node Create(Blackboard blackboardDescriptor)
+            public Node Create(TreeDec treeDec)
             {
-                blackboardDescriptor.Register(testParameter);
+                treeDec.BlackboardRegister(testParameter);
 
-                int x = blackboardDescriptor.Get<int>(horseParameter);
+                var node = new ReadDuringInitNode() { ReadId = readParameter };
 
-                return new Succeed();
+                // this should fail
+                var value = node.DoRead();
+
+                return node;
             }
         }
 

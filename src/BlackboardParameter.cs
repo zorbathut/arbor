@@ -14,17 +14,20 @@ namespace Arbor
         }
     }
 
+    internal static class BlackboardStatics
+    {
+        internal static ulong s_uid = 0;    // always interlocked
+    }
+
     [Dec.CloneStructPiecewise]
     public struct BlackboardParameter<T> : Dec.IRecordable
     {
         internal BlackboardIdentifier? identifier;
         internal T constant;
 
-        private static ulong s_uid = 0;    // always interlocked
-
         public static BlackboardParameter<T> Tree(string id)
         {
-            return new BlackboardParameter<T> { identifier = new BlackboardIdentifier{ uid = System.Threading.Interlocked.Increment(ref s_uid), label = id } };
+            return new BlackboardParameter<T> { identifier = new BlackboardIdentifier{ uid = System.Threading.Interlocked.Increment(ref BlackboardStatics.s_uid), label = id } };
         }
 
         public static BlackboardParameter<T> Constant(T initial)

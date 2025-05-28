@@ -51,7 +51,7 @@ namespace ArborTest
         {
             public static Payload payload;
 
-            public Node Create(Blackboard blackboardDescriptor)
+            public Node Create(TreeDec tree)
             {
                 return new IdleNode()
                     .EventAttach(EventDecs.ZeroParameter, () => payload.seen0++)

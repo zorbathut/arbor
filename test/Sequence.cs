@@ -18,7 +18,7 @@ namespace ArborTest
             public static Result stage6_rf = Result.Working;
             public static int stage7_seen = 0;
 
-            public Arbor.Node Create(Blackboard blackboardDescriptor)
+            public Arbor.Node Create(TreeDec treeDec)
             {
                 return new Arbor.Sequence(
                     new FunctionSimple(() =>

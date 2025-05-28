@@ -30,7 +30,7 @@ namespace ArborTest
 
         public class BasicTree : Arbor.TreeDec.ITreeFactory
         {
-            public Node Create(Blackboard blackboardDescriptor)
+            public Node Create(TreeDec treeDec)
             {
                 return new PropertyTestNode()
                     .PropertyAttach(PropertyDecs.IntProperty, 42)
@@ -78,7 +78,7 @@ namespace ArborTest
 
         public class PropertyInheritanceTree : Arbor.TreeDec.ITreeFactory
         {
-            public Node Create(Blackboard blackboardDescriptor)
+            public Node Create(TreeDec treeDec)
             {
                 return new Arbor.Sequence(
                     new PropertyTestNode()
@@ -133,7 +133,7 @@ namespace ArborTest
 
         public class PropertyOverrideTree : Arbor.TreeDec.ITreeFactory
         {
-            public Node Create(Blackboard blackboardDescriptor)
+            public Node Create(TreeDec treeDec)
             {
                 return new Arbor.Sequence(
                     new PropertyTestNode(),
@@ -186,7 +186,7 @@ namespace ArborTest
 
         public class PropertyDefaultValueTree : Arbor.TreeDec.ITreeFactory
         {
-            public Node Create(Blackboard blackboardDescriptor)
+            public Node Create(TreeDec treeDec)
             {
                 return new PropertyTestNode();
             }

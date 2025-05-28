@@ -21,7 +21,7 @@ namespace ArborTest
 
         public class BasicTree : Arbor.TreeDec.ITreeFactory
         {
-            public Node Create(Blackboard blackboardDescriptor)
+            public Node Create(TreeDec tree)
             {
                 return new Arbor.Sequence(
                     new IncrementNode(),

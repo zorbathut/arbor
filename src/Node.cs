@@ -20,7 +20,7 @@ namespace Arbor
 
         internal static bool initRunning = false;
 
-        public void Init(Blackboard blackboardDescriptor, List<Node> nodeList)
+        public void Init(TreeDec treeDec, List<Node> nodeList)
         {
             if (!initRunning)
             {
@@ -38,7 +38,7 @@ namespace Arbor
             nodeIndex = nodeList.Count;
             nodeList.Add(this);
 
-            InitFields(blackboardDescriptor, nodeList);
+            InitFields(treeDec, nodeList);
 
             initted = true;
         }
@@ -152,7 +152,7 @@ namespace Arbor
             ResetFields();
         }
 
-        public virtual void InitFields(Blackboard blackboardDescriptor, List<Node> nodeList) { }
+        public virtual void InitFields(TreeDec treeDec, List<Node> nodeList) { }
         public virtual void ResetFields() { }
     }
 }

@@ -29,7 +29,7 @@ namespace Arbor
 
         // local state
         internal IEnumerator<Result>[] enumerators;
-        private Blackboard blackboard;
+        internal Blackboard blackboard;
 
         // refreshed on every update; used for event triggers
         internal List<int> active;
@@ -46,7 +46,15 @@ namespace Arbor
             active = new List<int>();
 
             // get a copy of the initial blackboard
-            blackboard = Dec.Recorder.Clone(tree.blackboardDescriptor);
+            blackboard = Dec.Recorder.Clone(tree.blackboardTemplate);
+        }
+
+        internal static State ForSetup(TreeDec tree)
+        {
+            State state = new State();
+            state.tree = tree;
+            state.blackboard = tree.blackboardTemplate; // crosslinked
+            return state;
         }
 
         public void Update()
