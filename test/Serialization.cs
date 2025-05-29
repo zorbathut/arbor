@@ -57,11 +57,12 @@ namespace ArborTest
             }
 
             string serialized;
+            Arbor.State oldState;
             {
-                var state = new Arbor.State(Dec.Database<Arbor.TreeDec>.Get("Test"));
-                state.Blackboard().Set(ParameterTreeA.data, "banjo");
+                oldState = new Arbor.State(Dec.Database<Arbor.TreeDec>.Get("Test"));
+                oldState.Blackboard().Set(ParameterTreeA.data, "banjo");
 
-                serialized = Dec.Recorder.Write(state);
+                serialized = Dec.Recorder.Write(oldState);
             }
 
             Dec.Database.Clear();
@@ -81,6 +82,10 @@ namespace ArborTest
             {
                 var newState = Dec.Recorder.Read<Arbor.State>(serialized);
                 Assert.AreEqual("banjo", newState.Blackboard().Get(ParameterTreeB.data));
+
+                Dec.Recorder.ChecksumDiff(oldState, newState, Assert.Fail);
+
+                // make sure we can set it (though we better be able to)
                 newState.Blackboard().Set(ParameterTreeB.data, "newBanjo");
             }
 

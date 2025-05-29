@@ -130,6 +130,8 @@ namespace ArborTest
 
         public void DoCloneBehavior<T>(CloneBehavior cloneBehavior, ref Arbor.State state, ref T extra)
         {
+            var origState = state;
+
             switch (cloneBehavior)
             {
                 case CloneBehavior.Nop:
@@ -143,6 +145,8 @@ namespace ArborTest
                     (state, extra) = Dec.Recorder.Read<(Arbor.State, T)>(Dec.Recorder.Write((state, extra)));
                     break;
             }
+
+            Dec.Recorder.ChecksumDiff(origState, state, Assert.Fail);
         }
     }
 
