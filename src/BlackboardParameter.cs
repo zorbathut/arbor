@@ -74,6 +74,11 @@ namespace Arbor
             }
         }
 
+        public bool IsConstant()
+        {
+            return !identifier.HasValue;
+        }
+
         public void Record(Dec.Recorder recorder)
         {
             recorder.RecordAsThis(ref identifier);

@@ -38,8 +38,7 @@ namespace Arbor
         {
             if (id.identifier == null)
             {
-                Dbg.Err("Attempted to get a blackboard parameter from a constant");
-                return default;
+                return id.constant;
             }
 
             if (writeOnly)

@@ -88,7 +88,7 @@ namespace Arbor
                             source.AppendLine($"  set => {bbp.Name}.Set(value);");
                             source.AppendLine($"}}");
 
-                            initFields.AppendLine($"treeDec.BlackboardRegister({bbp.Name});");
+                            initFields.AppendLine($"if (!{bbp.Name}.IsConstant()) treeDec.BlackboardRegister({bbp.Name});");
                         }
 
                         // Check to see if this is derived from a Node
