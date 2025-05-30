@@ -73,11 +73,26 @@ namespace Arbor
                         if (SymbolEqualityComparer.Default.Equals(namedType.ConstructedFrom,
                                 arborBlackboardParameterType))
                         {
-                            if (!bbp.Name.EndsWith("Id"))
+                            bool isStatic = bbp.IsStatic;
+                            bool endsWithId = bbp.Name.EndsWith("Id");
+
+                            if (!isStatic && !endsWithId)
                             {
                                 context.ReportDiagnostic(Diagnostic.Create(
                                     new DiagnosticDescriptor("a", "", "Blackboard parameters must have an `Id` suffix.",
                                         "", DiagnosticSeverity.Error, true), nowhereLocation));
+                            }
+                            if (isStatic && endsWithId)
+                            {
+                                context.ReportDiagnostic(Diagnostic.Create(
+                                    new DiagnosticDescriptor("a", "", "Blackboard parameters cannot be static and have an Id suffix.",
+                                        "", DiagnosticSeverity.Error, true), nowhereLocation));
+                            }
+
+                            if (isStatic)
+                            {
+                                // don't include
+                                continue;
                             }
 
                             foundSomething = true;

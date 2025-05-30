@@ -297,5 +297,18 @@ namespace ArborTest
 
             Assert.AreEqual("dst", state.Blackboard().Get<string>(ToConstantTree.write));
         }
+
+        // this is honestly a test in its own right, just to see if static parameters work
+        // they won't be registered but they shouldn't be ignored
+        public partial class StaticLabelNode : Arbor.Node
+        {
+            public static Arbor.BlackboardParameter<string> ReadParam = Arbor.BlackboardParameter<string>.Tree("read");
+            public Arbor.BlackboardParameter<string> ReadId = ReadParam;
+
+            public override IEnumerable<Arbor.Result> Worker()
+            {
+                yield return Arbor.Result.Success;
+            }
+        }
     }
 }
