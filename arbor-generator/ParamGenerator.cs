@@ -21,15 +21,25 @@ namespace Arbor
 
             var fullyQualified = SymbolDisplayFormat.FullyQualifiedFormat.WithGlobalNamespaceStyle(SymbolDisplayGlobalNamespaceStyle.Omitted);
 
-            var nowhereLocation = Location.Create(context.Compilation.SyntaxTrees.First(), new Microsoft.CodeAnalysis.Text.TextSpan(1, 2));
+            // For compilation-wide diagnostics, use the first syntax tree's root location
+            var compilationLocation = context.Compilation.SyntaxTrees.FirstOrDefault()?.GetRoot().GetLocation()
+                ?? Location.None;
 
             if (arborNodeType == null)
             {
-                context.ReportDiagnostic(Diagnostic.Create(new DiagnosticDescriptor("a", "", "missin' arbor node", "", DiagnosticSeverity.Error, true), nowhereLocation));
+                context.ReportDiagnostic(Diagnostic.Create(
+                    new DiagnosticDescriptor("ARB001", "Missing Type",
+                        "The type 'Arbor.Node' could not be found. Make sure the Arbor assembly is referenced.",
+                        "Arbor.Generator", DiagnosticSeverity.Error, true),
+                    compilationLocation));
             }
             if (arborBlackboardParameterType == null)
             {
-                context.ReportDiagnostic(Diagnostic.Create(new DiagnosticDescriptor("a", "", "missin' arbor bbp", "", DiagnosticSeverity.Error, true), nowhereLocation));
+                context.ReportDiagnostic(Diagnostic.Create(
+                    new DiagnosticDescriptor("ARB002", "Missing Type",
+                        "The type 'Arbor.BlackboardParameter<T>' could not be found. Make sure the Arbor assembly is referenced.",
+                        "Arbor.Generator", DiagnosticSeverity.Error, true),
+                    compilationLocation));
             }
 
             foreach (var type in context.Compilation.SyntaxTrees.SelectMany(tree =>
@@ -76,17 +86,24 @@ namespace Arbor
                             bool isStatic = bbp.IsStatic;
                             bool endsWithId = bbp.Name.EndsWith("Id");
 
+                            // Get the actual location of the field
+                            var fieldLocation = bbp.Locations.FirstOrDefault() ?? Location.None;
+
                             if (!isStatic && !endsWithId)
                             {
                                 context.ReportDiagnostic(Diagnostic.Create(
-                                    new DiagnosticDescriptor("a", "", "Blackboard parameters must have an `Id` suffix.",
-                                        "", DiagnosticSeverity.Error, true), nowhereLocation));
+                                    new DiagnosticDescriptor("ARB003", "Naming Convention",
+                                        $"The blackboard parameter field '{bbp.Name}' must have an 'Id' suffix.",
+                                        "Arbor.Generator", DiagnosticSeverity.Error, true),
+                                    fieldLocation));
                             }
                             if (isStatic && endsWithId)
                             {
                                 context.ReportDiagnostic(Diagnostic.Create(
-                                    new DiagnosticDescriptor("a", "", "Blackboard parameters cannot be static and have an Id suffix.",
-                                        "", DiagnosticSeverity.Error, true), nowhereLocation));
+                                    new DiagnosticDescriptor("ARB004", "Invalid Modifier",
+                                        $"The blackboard parameter field '{bbp.Name}' cannot be static and have an 'Id' suffix.",
+                                        "Arbor.Generator", DiagnosticSeverity.Error, true),
+                                    fieldLocation));
                             }
 
                             if (isStatic)
