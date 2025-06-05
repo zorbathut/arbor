@@ -1,4 +1,3 @@
-
 using System.Linq;
 using Arbor;
 using NUnit.Framework;
@@ -309,6 +308,64 @@ namespace ArborTest
             {
                 yield return Arbor.Result.Success;
             }
+        }
+
+        public class MultiRegisterTree : Arbor.TreeDec.ITreeFactory
+        {
+            public static BlackboardParameter<string> item = BlackboardParameter<string>.Tree("item");
+
+            public Node Create(TreeDec tree)
+            {
+                return new Arbor.Sequence(
+                    new ParameterTestNode() { ReadId = item, WriteId = item, },
+                    new ParameterTestNode() { ReadId = item, WriteId = item, },
+                    new ParameterTestNode() { ReadId = item, WriteId = item, }
+                );
+            }
+        }
+
+        [Test]
+        public void MultiRegister([Values] CloneBehavior cloneBehavior)
+        {
+            // Note: This test is *really* here to test for a serialization problem when parameters are registered multiple times in a tree.
+            // The rest of it is kinda just fuzz garbage.
+
+            UpdateTestParameters(new Dec.Config.UnitTestParameters { explicitTypes = new System.Type[] { typeof(MultiRegisterTree) } });
+
+            var parser = new Dec.Parser();
+            parser.AddString(Dec.Parser.FileType.Xml, @"
+                <Decs>
+                    <Arbor.TreeDec decName=""Test"">
+                        <worker class=""ArborTest.Parameter.MultiRegisterTree"" />
+                    </Arbor.TreeDec>
+                </Decs>
+            ");
+            parser.Finish();
+
+            var state = new Arbor.State(Dec.Database<Arbor.TreeDec>.Get("Test"));
+
+            // Initial setup
+            state.Blackboard().Set<string>(MultiRegisterTree.item, "initial");
+            Assert.AreEqual("initial", state.Blackboard().Get<string>(MultiRegisterTree.item));
+
+            DoCloneBehavior(cloneBehavior, ref state);
+
+            // First update should pass the value through all three nodes
+            state.Update();
+
+            DoCloneBehavior(cloneBehavior, ref state);
+
+            // The value should remain the same after update since all nodes read and write to the same parameter
+            Assert.AreEqual("initial", state.Blackboard().Get<string>(MultiRegisterTree.item));
+
+            // Change value and update again
+            state.Blackboard().Set<string>(MultiRegisterTree.item, "changed");
+            Assert.AreEqual("changed", state.Blackboard().Get<string>(MultiRegisterTree.item));
+
+            state.Update();
+
+            // Value should still be the same after passing through all nodes
+            Assert.AreEqual("changed", state.Blackboard().Get<string>(MultiRegisterTree.item));
         }
     }
 }

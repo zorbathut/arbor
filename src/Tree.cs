@@ -42,6 +42,16 @@ namespace Arbor
                 return;
             }
 
+            // check if this is already registered
+            if (blackboardLocalIdLookup.TryGetValue(id.identifier.Value.uid, out int existingIndex))
+            {
+                if (blackboardRegistrations[existingIndex].type != typeof(T) || blackboardRegistrations[existingIndex].name != id.identifier.Value.label)
+                {
+                    Dbg.Err($"Blackboard parameter `{id}` is already registered with a different type or label somehow");
+                }
+                return;
+            }
+
             // add to our ordered list
             blackboardRegistrations.Add((typeof(T), id.identifier.Value.label));
             blackboardLocalIdLookup[id.identifier.Value.uid] = blackboardLocalId.Count;
