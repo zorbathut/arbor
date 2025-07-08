@@ -84,5 +84,17 @@ namespace Arbor
             recorder.RecordAsThis(ref identifier);
             recorder.RecordAsThis(ref constant);
         }
+
+        public override string ToString()
+        {
+            if (identifier.HasValue)
+            {
+                return $"[{identifier.Value.label}]";
+            }
+            else
+            {
+                return $"[Constant:{constant}]";
+            }
+        }
     }
 }
