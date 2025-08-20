@@ -121,7 +121,7 @@ namespace Arbor
             var arrayPath = new Dec.PathMember(new Dec.PathDec(typeof(TreeDec), DecName), "nodeList");
             for (int i = 0; i < nodes.Length; ++i)
             {
-                Dec.Database.RegisterLookup(nodes[i], new Dec.PathIndex(arrayPath, i));
+                Dec.Database.DecLookupRegisterCustom(nodes[i], new Dec.PathIndex(arrayPath, i));
             }
         }
     }
