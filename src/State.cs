@@ -201,6 +201,12 @@ namespace Arbor
             recorder.Record(ref enumerators, nameof(enumerators));
             recorder.Record(ref blackboard, nameof(blackboard));
             recorder.Record(ref active, nameof(active));
+
+            if (enumerators.Length != tree.nodes.Length)
+            {
+                Dbg.Wrn("Node count changed; resetting state.");
+                enumerators = new IEnumerator<Result>[tree.nodes.Length];
+            }
         }
     }
 }
