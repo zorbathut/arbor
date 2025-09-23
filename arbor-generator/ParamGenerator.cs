@@ -127,8 +127,8 @@ namespace Arbor
                         if (namedType.InheritsFrom(arborNodeType))
                         {
                             foundSomething = true;
-                            initFields.AppendLine($"{bbp.Name}.Init(treeDec, nodeList);");
-                            resetFields.AppendLine($"{bbp.Name}.Reset();");
+                            initFields.AppendLine($"{bbp.Name}?.Init(treeDec, nodeList);");
+                            resetFields.AppendLine($"{bbp.Name}?.Reset();");
                         }
 
                         var genericType = namedType.ConstructedFrom;
