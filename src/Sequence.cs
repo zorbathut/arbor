@@ -20,7 +20,7 @@ namespace Arbor
             {
                 while (true)
                 {
-                    var result = child.Update();
+                    var result = child?.Update() ?? Result.Success;
                     if (result == Result.Success)
                     {
                         // yay! keep on movin'
