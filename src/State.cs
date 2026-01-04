@@ -3,6 +3,11 @@ using System.Collections.Generic;
 
 namespace Arbor
 {
+    /// <summary>
+    /// Debug visualization state for a node (separate from Result which is used for execution).
+    /// </summary>
+    public enum DebugNodeState { Working, Success, Failure, Terminated }
+
     public class State : Dec.IRecordable
     {
         public static System.Threading.ThreadLocal<State> Current = new();
@@ -26,6 +31,7 @@ namespace Arbor
 
         // the tree we refer to
         internal Arbor.TreeDec tree;
+        public TreeDec Tree => tree;
 
         // local state
         internal IEnumerator<Result>[] enumerators;
@@ -36,6 +42,11 @@ namespace Arbor
 
         // ephemeral, used for debugging
         internal List<Node> stack = new List<Node>();
+
+        // debug visualization state (for now, serialized)
+        internal DebugNodeState?[] debugLastStates;
+        internal int[] debugLastStateFrames;
+        internal int debugCurrentFrame;
 
         private State() { } // needed for Dec record
         public State(TreeDec tree)
@@ -60,10 +71,16 @@ namespace Arbor
 
             // get a copy of the initial blackboard
             blackboard = Dec.Recorder.Clone(tree.blackboardTemplate);
+
+            // debug visualization state
+            debugLastStates = new DebugNodeState?[tree.nodes.Length];
+            debugLastStateFrames = new int[tree.nodes.Length];
+            debugCurrentFrame = 0;
         }
 
         public void Update()
         {
+            debugCurrentFrame++;
             active.Clear();
             using (new Scope(this))
             {
@@ -162,6 +179,21 @@ namespace Arbor
             blackboard.Set(identifier, item);
         }
 
+        /// <summary>
+        /// Get debug visualization state for a node.
+        /// Returns the state and the number of frames since it was set (0 = this frame).
+        /// </summary>
+        public (DebugNodeState? state, int framesSince) DebugGetNodeState(Node node)
+        {
+            if (active.Contains(node.nodeIndex))
+            {
+                return (DebugNodeState.Working, 0);
+            }
+            DebugNodeState? lastState = debugLastStates?[node.nodeIndex];
+            int frame = debugLastStateFrames?[node.nodeIndex] ?? 0;
+            return (lastState, debugCurrentFrame - frame);
+        }
+
         public void Record(Dec.Recorder recorder)
         {
             // this ends up being complicated
@@ -172,6 +204,10 @@ namespace Arbor
                 recorder.Record(ref enumerators, nameof(enumerators));
                 recorder.Record(ref blackboard, nameof(blackboard));
                 recorder.Record(ref active, nameof(active));
+
+                recorder.Record(ref debugLastStates, nameof(debugLastStates));
+                recorder.Record(ref debugLastStateFrames, nameof(debugLastStateFrames));
+                recorder.Record(ref debugCurrentFrame, nameof(debugCurrentFrame));
                 return;
             }
 
@@ -202,10 +238,16 @@ namespace Arbor
             recorder.Record(ref blackboard, nameof(blackboard));
             recorder.Record(ref active, nameof(active));
 
+            recorder.Record(ref debugLastStates, nameof(debugLastStates));
+            recorder.Record(ref debugLastStateFrames, nameof(debugLastStateFrames));
+            recorder.Record(ref debugCurrentFrame, nameof(debugCurrentFrame));
+
             if (enumerators.Length != tree.nodes.Length)
             {
                 Dbg.Wrn("Node count changed; resetting state.");
                 enumerators = new IEnumerator<Result>[tree.nodes.Length];
+                debugLastStates = new DebugNodeState?[tree.nodes.Length];
+                debugLastStateFrames = new int[tree.nodes.Length];
             }
         }
     }

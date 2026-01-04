@@ -16,7 +16,7 @@ namespace Arbor
         internal Dictionary<Arbor.BasePropertyDec, object> properties;
 
         private bool initted;
-        private int nodeIndex = -1;
+        internal int nodeIndex = -1;
 
         internal static bool initRunning = false;
 
@@ -88,6 +88,8 @@ namespace Arbor
                 }
 
                 state.active[activeIndex] = -1; // nope, not active anymore
+                state.debugLastStates[nodeIndex] = DebugNodeState.Failure;
+                state.debugLastStateFrames[nodeIndex] = state.debugCurrentFrame;
                 return Result.Failure;
             }
 
@@ -104,6 +106,10 @@ namespace Arbor
                     Dbg.Ex(e);
                 }
                 state.active[activeIndex] = -1; // nope, not active anymore
+                state.debugLastStates[nodeIndex] = result == Result.Success
+                    ? DebugNodeState.Success
+                    : DebugNodeState.Failure;
+                state.debugLastStateFrames[nodeIndex] = state.debugCurrentFrame;
             }
 
             return result;
@@ -139,13 +145,18 @@ namespace Arbor
 
         public virtual void Reset()
         {
-            ref var currentWorker = ref State.Current.Value.enumerators[nodeIndex];
+            var state = State.Current.Value;
+            ref var currentWorker = ref state.enumerators[nodeIndex];
 
             // already done, stop recursiving
             if (currentWorker == null)
             {
                 return;
             }
+
+            // Mark as terminated since we're being reset mid-execution
+            state.debugLastStates[nodeIndex] = DebugNodeState.Terminated;
+            state.debugLastStateFrames[nodeIndex] = state.debugCurrentFrame;
 
             currentWorker.Dispose();
             currentWorker = null;
