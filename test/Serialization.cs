@@ -2,6 +2,7 @@
 using Arbor;
 using NUnit.Framework;
 using System.Collections.Generic;
+using Assert = NUnit.Framework.Assert;
 
 namespace ArborTest
 {
