@@ -15,6 +15,11 @@ namespace Arbor
         internal Dictionary<Arbor.BaseEventDec, List<System.Delegate>> eventActions;
         internal Dictionary<Arbor.BasePropertyDec, object> properties;
 
+        /// <summary>
+        /// Debug name for this node. Returns the explicitly set name, or null if none was set.
+        /// </summary>
+        public string Name { internal set; get; }
+
         private bool initted;
         internal int nodeIndex = -1;
 
