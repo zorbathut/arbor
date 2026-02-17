@@ -122,6 +122,19 @@ namespace Arbor
             for (int i = 0; i < nodes.Length; ++i)
             {
                 Dec.Database.DecLookupRegisterCustom(nodes[i], new Dec.PathIndex(arrayPath, i));
+
+                // we also want to forbid any members of the node, since those shouldn't be serialized in general
+                var nodeType = nodes[i].GetType();
+                foreach (var field in nodeType.GetFields(System.Reflection.BindingFlags.Public |
+                                                         System.Reflection.BindingFlags.NonPublic |
+                                                         System.Reflection.BindingFlags.Instance))
+                {
+                    var value = field.GetValue(nodes[i]);
+                    if (value != null && Dec.Util.CanBeShared(value.GetType()))
+                    {
+                        Dec.Database.DecRegisterForbid(value);
+                    }
+                }
             }
         }
     }

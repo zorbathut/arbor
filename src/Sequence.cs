@@ -16,11 +16,11 @@ namespace Arbor
         [Dec.RecorderEnumerator.RecordableEnumerable]
         public override IEnumerable<Result> Worker()
         {
-            foreach (var child in m_children)
+            for (int i = 0; i < m_children.Length; i++)
             {
                 while (true)
                 {
-                    var result = child?.Update() ?? Result.Success;
+                    var result = m_children[i]?.Update() ?? Result.Success;
                     if (result == Result.Success)
                     {
                         // yay! keep on movin'
