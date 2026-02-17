@@ -118,10 +118,12 @@ namespace Arbor
             }
 
             // do this manually (this is ugly!)
+            HashSet<object> registeredNodes = new HashSet<object>();
             var arrayPath = new Dec.PathMember(new Dec.PathDec(typeof(TreeDec), DecName), "nodeList");
             for (int i = 0; i < nodes.Length; ++i)
             {
                 Dec.Database.DecLookupRegisterCustom(nodes[i], new Dec.PathIndex(arrayPath, i));
+                registeredNodes.Add(nodes[i]);
             }
 
             // on a second pass, ban node members
@@ -134,7 +136,7 @@ namespace Arbor
                              System.Reflection.BindingFlags.Instance))
                 {
                     var value = field.GetValue(node);
-                    if (value != null && Dec.Util.CanBeShared(value.GetType()))
+                    if (value != null && Dec.Util.CanBeShared(value.GetType()) && !registeredNodes.Contains(value))
                     {
                         Dec.Database.DecRegisterForbid(value);
                     }
