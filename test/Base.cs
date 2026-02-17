@@ -77,7 +77,7 @@ namespace ArborTest
             };
             Dec.Config.ExceptionHandler = Arbor.Config.ExceptionHandler;
 
-            Dec.Config.ConverterFactory = Dec.RecorderEnumerator.Config.ConverterFactory;
+            Dec.RecorderEnumerator.Config.Setup();
         }
 
         public static void UpdateTestParameters(Dec.Config.UnitTestParameters parameters)
