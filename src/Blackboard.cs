@@ -72,6 +72,20 @@ namespace Arbor
 
         public void Set<T>(BlackboardParameter<T> id, T item)
         {
+            if (id.identifier != null && !types.ContainsKey(id.identifier.Value.uid))
+            {
+                Dbg.Err($"Parameter `{id}` is not a known blackboard parameter; when building the tree, either include it as part of an Arbor.Node or register it with `BlackboardParameter<>.RegisterWith()`");
+                return;
+            }
+
+            TrySet(id, item);
+        }
+
+        /// <summary>
+        /// Like <see cref="Set"/>, but treats "the tree never registered this parameter" as a valid no-op instead of an error. Use for parameters that may legitimately be absent from a given tree (e.g. the owning entity, which is only present when the tree contains an EntityNode).
+        /// </summary>
+        public void TrySet<T>(BlackboardParameter<T> id, T item)
+        {
             if (id.identifier == null)
             {
                 Dbg.Err("Attempted to set a blackboard parameter from a constant");
@@ -81,7 +95,6 @@ namespace Arbor
             var uid = id.identifier.Value.uid;
             if (!types.ContainsKey(uid))
             {
-                Dbg.Err($"Parameter `{id}` is not a known blackboard parameter; when building the tree, either include it as part of an Arbor.Node or register it with `BlackboardParameter<>.RegisterWith()`");
                 return;
             }
 

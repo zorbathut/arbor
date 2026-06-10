@@ -368,5 +368,62 @@ namespace ArborTest
             // Value should still be the same after passing through all nodes
             Assert.AreEqual("changed", state.Blackboard().Get<string>(MultiRegisterTree.item));
         }
+
+        [Test]
+        public void TrySetUnregistered([Values] CloneBehavior cloneBehavior)
+        {
+            // TrySet is the no-error counterpart to Set: writing a parameter the tree never registered is a silent no-op rather than a Dbg.Err.
+            UpdateTestParameters(new Dec.Config.UnitTestParameters { explicitTypes = new System.Type[] { typeof(RegistrationFailureTree) } });
+
+            var parser = new Dec.Parser();
+            parser.AddString(Dec.Parser.FileType.Xml, @"
+                <Decs>
+                    <Arbor.TreeDec decName=""Test"">
+                        <worker class=""ArborTest.Parameter.RegistrationFailureTree"" />
+                    </Arbor.TreeDec>
+                </Decs>
+            ");
+            parser.Finish();
+
+            var state = new Arbor.State(Dec.Database<Arbor.TreeDec>.Get("Test"));
+
+            var unregistered = BlackboardParameter<string>.Tree("write");
+
+            // Set errors on an unregistered parameter (see RegistrationFailure); TrySet must not.
+            ExpectErrors(() => state.Blackboard().Set<string>(unregistered, "hello"));
+            state.Blackboard().TrySet<string>(unregistered, "hello");
+
+            // The no-op leaves the parameter genuinely unregistered - TrySet didn't sneak it into the blackboard - so reading it still errors.
+            ExpectErrors(() => state.Blackboard().Get<string>(unregistered));
+
+            // And the blackboard stays clean enough to round-trip through serialization, which is the corruption this guards against.
+            DoCloneBehavior(cloneBehavior, ref state);
+        }
+
+        [Test]
+        public void TrySetRegistered([Values] CloneBehavior cloneBehavior)
+        {
+            // When the parameter IS registered, TrySet behaves exactly like Set: the value is written and survives serialization.
+            UpdateTestParameters(new Dec.Config.UnitTestParameters { explicitTypes = new System.Type[] { typeof(BasicTree) } });
+
+            var parser = new Dec.Parser();
+            parser.AddString(Dec.Parser.FileType.Xml, @"
+                <Decs>
+                    <Arbor.TreeDec decName=""Test"">
+                        <worker class=""ArborTest.Parameter.BasicTree"" />
+                    </Arbor.TreeDec>
+                </Decs>
+            ");
+            parser.Finish();
+
+            var state = new Arbor.State(Dec.Database<Arbor.TreeDec>.Get("Test"));
+
+            state.Blackboard().TrySet<string>(BasicTree.write, "goodbye");
+            Assert.AreEqual("goodbye", state.Blackboard().Get<string>(BasicTree.write));
+
+            DoCloneBehavior(cloneBehavior, ref state);
+
+            Assert.AreEqual("goodbye", state.Blackboard().Get<string>(BasicTree.write));
+        }
     }
 }
