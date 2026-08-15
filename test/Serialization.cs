@@ -43,7 +43,7 @@ namespace ArborTest
         [Test]
         public void ChangedUid()
         {
-            UpdateTestParameters(new Dec.Config.UnitTestParameters { explicitTypes = new System.Type[] { typeof(ParameterTreeA), typeof(ParameterTreeB) } });
+            UpdateTestParameters(new UnitTestParameters { explicitTypes = new System.Type[] { typeof(ParameterTreeA), typeof(ParameterTreeB) } });
 
             {
                 var parser = new Dec.Parser();

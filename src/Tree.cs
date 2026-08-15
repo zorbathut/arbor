@@ -60,10 +60,9 @@ namespace Arbor
             blackboardTemplate.Register(id);
         }
 
-        public override void ConfigErrors(Action<string> reporter)
+        [Dec.Setup]
+        private void ValidateWorker(Action<string> reporter)
         {
-            base.ConfigErrors(reporter);
-
             if (worker == null)
             {
                 reporter("Worker is null; at the moment this is mandatory");
@@ -76,10 +75,10 @@ namespace Arbor
             }
         }
 
-        public override void PostLoad(Action<string> reporter)
+        [Dec.Setup]
+        [Dec.SetupAfter(typeof(TreeDec), nameof(ValidateWorker))]
+        private void BuildTree(Action<string> reporter)
         {
-            base.PostLoad(reporter);
-
             // make our template
             blackboardTemplate = new Blackboard();
 

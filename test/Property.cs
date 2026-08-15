@@ -43,7 +43,7 @@ namespace ArborTest
         [Test]
         public void Basic([Values] CloneBehavior cloneBehavior)
         {
-            UpdateTestParameters(new Dec.Config.UnitTestParameters {
+            UpdateTestParameters(new UnitTestParameters {
                 explicitTypes = new System.Type[] { typeof(BasicTree) },
                 explicitStaticRefs = new System.Type[] { typeof(PropertyDecs) }
             });
@@ -94,7 +94,7 @@ namespace ArborTest
         [Test]
         public void PropertyInheritance([Values] CloneBehavior cloneBehavior)
         {
-            UpdateTestParameters(new Dec.Config.UnitTestParameters {
+            UpdateTestParameters(new UnitTestParameters {
                 explicitTypes = new System.Type[] { typeof(PropertyInheritanceTree) },
                 explicitStaticRefs = new System.Type[] { typeof(PropertyDecs) }
             });
@@ -148,7 +148,7 @@ namespace ArborTest
         [Test]
         public void PropertyOverrideTest([Values] CloneBehavior cloneBehavior)
         {
-            UpdateTestParameters(new Dec.Config.UnitTestParameters {
+            UpdateTestParameters(new UnitTestParameters {
                 explicitTypes = new System.Type[] { typeof(PropertyOverrideTree) },
                 explicitStaticRefs = new System.Type[] { typeof(PropertyDecs) }
             });
@@ -196,7 +196,7 @@ namespace ArborTest
         [Test]
         public void PropertyDefaultValue([Values] CloneBehavior cloneBehavior)
         {
-            UpdateTestParameters(new Dec.Config.UnitTestParameters {
+            UpdateTestParameters(new UnitTestParameters {
                 explicitTypes = new System.Type[] { typeof(PropertyDefaultValueTree) },
                 explicitStaticRefs = new System.Type[] { typeof(PropertyDecs) }
             });

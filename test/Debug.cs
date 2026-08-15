@@ -73,7 +73,7 @@ namespace ArborTest
         [Test]
         public void NeverExecuted_ReturnsNull()
         {
-            UpdateTestParameters(new Dec.Config.UnitTestParameters {
+            UpdateTestParameters(new UnitTestParameters {
                 explicitTypes = new System.Type[] { typeof(WaitTree) }
             });
 
@@ -102,7 +102,7 @@ namespace ArborTest
         [Test]
         public void ActiveNode_ReturnsWorking([Values] CloneBehavior cloneBehavior)
         {
-            UpdateTestParameters(new Dec.Config.UnitTestParameters {
+            UpdateTestParameters(new UnitTestParameters {
                 explicitTypes = new System.Type[] { typeof(WaitTree) }
             });
 
@@ -130,7 +130,7 @@ namespace ArborTest
         [Test]
         public void WorkingNode_AlwaysZeroFramesSince([Values] CloneBehavior cloneBehavior)
         {
-            UpdateTestParameters(new Dec.Config.UnitTestParameters {
+            UpdateTestParameters(new UnitTestParameters {
                 explicitTypes = new System.Type[] { typeof(WaitTree) }
             });
 
@@ -166,7 +166,7 @@ namespace ArborTest
         [Test]
         public void CompletedSuccess_ReturnsSuccess([Values] CloneBehavior cloneBehavior)
         {
-            UpdateTestParameters(new Dec.Config.UnitTestParameters {
+            UpdateTestParameters(new UnitTestParameters {
                 explicitTypes = new System.Type[] { typeof(SucceedTree) }
             });
 
@@ -198,7 +198,7 @@ namespace ArborTest
         [Test]
         public void CompletedFailure_ReturnsFailure([Values] CloneBehavior cloneBehavior)
         {
-            UpdateTestParameters(new Dec.Config.UnitTestParameters {
+            UpdateTestParameters(new UnitTestParameters {
                 explicitTypes = new System.Type[] { typeof(FailTree) }
             });
 
@@ -234,7 +234,7 @@ namespace ArborTest
             // First run: BlackboardResultNode fails → Select tries WaitNode → Working
             // After Reset + path change: BlackboardResultNode succeeds → Select succeeds → WaitNode never runs
             // This allows us to observe Terminated via public API since WaitNode isn't in active list
-            UpdateTestParameters(new Dec.Config.UnitTestParameters {
+            UpdateTestParameters(new UnitTestParameters {
                 explicitTypes = new System.Type[] { typeof(SelectTree), typeof(BlackboardResultNode) }
             });
 
@@ -286,7 +286,7 @@ namespace ArborTest
             // Use Sequence(Succeed, WaitNode) so Succeed completes once and WaitNode keeps running
             // This way Succeed's debug state stays at frame 1 while the tree continues
             // nodes[0] = Sequence, nodes[1] = Succeed, nodes[2] = WaitNode
-            UpdateTestParameters(new Dec.Config.UnitTestParameters {
+            UpdateTestParameters(new UnitTestParameters {
                 explicitTypes = new System.Type[] { typeof(SequenceWaitTree) }
             });
 
@@ -341,7 +341,7 @@ namespace ArborTest
         [Test]
         public void TreeProperty_ReturnsCorrectTree()
         {
-            UpdateTestParameters(new Dec.Config.UnitTestParameters {
+            UpdateTestParameters(new UnitTestParameters {
                 explicitTypes = new System.Type[] { typeof(SucceedTree) }
             });
 

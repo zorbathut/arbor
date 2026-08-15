@@ -40,7 +40,7 @@ namespace ArborTest
         [Test]
         public void Basic([Values] CloneBehavior cloneBehavior)
         {
-            UpdateTestParameters(new Dec.Config.UnitTestParameters { explicitTypes = new System.Type[] { typeof(BasicTree) } });
+            UpdateTestParameters(new UnitTestParameters { explicitTypes = new System.Type[] { typeof(BasicTree) } });
 
             var parser = new Dec.Parser();
             parser.AddString(Dec.Parser.FileType.Xml, @"
@@ -111,7 +111,7 @@ namespace ArborTest
         [Test]
         public void RegistrationFailure([Values] CloneBehavior cloneBehavior)
         {
-            UpdateTestParameters(new Dec.Config.UnitTestParameters { explicitTypes = new System.Type[] { typeof(RegistrationFailureTree) } });
+            UpdateTestParameters(new UnitTestParameters { explicitTypes = new System.Type[] { typeof(RegistrationFailureTree) } });
 
             var parser = new Dec.Parser();
             parser.AddString(Dec.Parser.FileType.Xml, @"
@@ -149,7 +149,7 @@ namespace ArborTest
         [Test]
         public void RegistrationList([Values] CloneBehavior cloneBehavior)
         {
-            UpdateTestParameters(new Dec.Config.UnitTestParameters { explicitTypes = new System.Type[] { typeof(RegistrationListTree) } });
+            UpdateTestParameters(new UnitTestParameters { explicitTypes = new System.Type[] { typeof(RegistrationListTree) } });
 
             var parser = new Dec.Parser();
             parser.AddString(Dec.Parser.FileType.Xml, @"
@@ -187,7 +187,7 @@ namespace ArborTest
         [Test]
         public void RegistrationArray([Values] CloneBehavior cloneBehavior)
         {
-            UpdateTestParameters(new Dec.Config.UnitTestParameters { explicitTypes = new System.Type[] { typeof(RegistrationArrayTree) } });
+            UpdateTestParameters(new UnitTestParameters { explicitTypes = new System.Type[] { typeof(RegistrationArrayTree) } });
 
             var parser = new Dec.Parser();
             parser.AddString(Dec.Parser.FileType.Xml, @"
@@ -224,7 +224,7 @@ namespace ArborTest
         [Test]
         public void FromConstant([Values] CloneBehavior cloneBehavior)
         {
-            UpdateTestParameters(new Dec.Config.UnitTestParameters { explicitTypes = new System.Type[] { typeof(FromConstantTree) } });
+            UpdateTestParameters(new UnitTestParameters { explicitTypes = new System.Type[] { typeof(FromConstantTree) } });
 
             var parser = new Dec.Parser();
             parser.AddString(Dec.Parser.FileType.Xml, @"
@@ -270,7 +270,7 @@ namespace ArborTest
         [Test]
         public void ToConstant([Values] CloneBehavior cloneBehavior)
         {
-            UpdateTestParameters(new Dec.Config.UnitTestParameters { explicitTypes = new System.Type[] { typeof(ToConstantTree) } });
+            UpdateTestParameters(new UnitTestParameters { explicitTypes = new System.Type[] { typeof(ToConstantTree) } });
 
             var parser = new Dec.Parser();
             parser.AddString(Dec.Parser.FileType.Xml, @"
@@ -331,7 +331,7 @@ namespace ArborTest
             // Note: This test is *really* here to test for a serialization problem when parameters are registered multiple times in a tree.
             // The rest of it is kinda just fuzz garbage.
 
-            UpdateTestParameters(new Dec.Config.UnitTestParameters { explicitTypes = new System.Type[] { typeof(MultiRegisterTree) } });
+            UpdateTestParameters(new UnitTestParameters { explicitTypes = new System.Type[] { typeof(MultiRegisterTree) } });
 
             var parser = new Dec.Parser();
             parser.AddString(Dec.Parser.FileType.Xml, @"
@@ -373,7 +373,7 @@ namespace ArborTest
         public void TrySetUnregistered([Values] CloneBehavior cloneBehavior)
         {
             // TrySet is the no-error counterpart to Set: writing a parameter the tree never registered is a silent no-op rather than a Dbg.Err.
-            UpdateTestParameters(new Dec.Config.UnitTestParameters { explicitTypes = new System.Type[] { typeof(RegistrationFailureTree) } });
+            UpdateTestParameters(new UnitTestParameters { explicitTypes = new System.Type[] { typeof(RegistrationFailureTree) } });
 
             var parser = new Dec.Parser();
             parser.AddString(Dec.Parser.FileType.Xml, @"
@@ -404,7 +404,7 @@ namespace ArborTest
         public void TrySetRegistered([Values] CloneBehavior cloneBehavior)
         {
             // When the parameter IS registered, TrySet behaves exactly like Set: the value is written and survives serialization.
-            UpdateTestParameters(new Dec.Config.UnitTestParameters { explicitTypes = new System.Type[] { typeof(BasicTree) } });
+            UpdateTestParameters(new UnitTestParameters { explicitTypes = new System.Type[] { typeof(BasicTree) } });
 
             var parser = new Dec.Parser();
             parser.AddString(Dec.Parser.FileType.Xml, @"

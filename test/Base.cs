@@ -80,9 +80,30 @@ namespace ArborTest
             Dec.RecorderEnumerator.Config.Setup();
         }
 
-        public static void UpdateTestParameters(Dec.Config.UnitTestParameters parameters)
+        // Dec.Config.UnitTestParameters is internal to Dec, so we mirror it here and copy it across by reflection.
+        public class UnitTestParameters
         {
-            typeof(Dec.Config).GetField("TestParameters", BindingFlags.NonPublic | BindingFlags.Static).SetValue(null, parameters);
+            public Type[] explicitTypes = null;
+            public Type[] explicitStaticRefs = null;
+            public Type[] explicitConverters = null;
+            public Type[] explicitSetupScanTypes = null;
+        }
+
+        public static void UpdateTestParameters(UnitTestParameters parameters)
+        {
+            var field = typeof(Dec.Config).GetField("TestParameters", BindingFlags.NonPublic | BindingFlags.Static);
+
+            object decParameters = null;
+            if (parameters != null)
+            {
+                decParameters = Activator.CreateInstance(field.FieldType, true);
+                foreach (var member in typeof(UnitTestParameters).GetFields(BindingFlags.Public | BindingFlags.Instance))
+                {
+                    field.FieldType.GetField(member.Name, BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance).SetValue(decParameters, member.GetValue(parameters));
+                }
+            }
+
+            field.SetValue(null, decParameters);
         }
 
         protected void ExpectWarnings(Action action)

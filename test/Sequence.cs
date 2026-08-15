@@ -52,7 +52,7 @@ namespace ArborTest
         [Test]
         public void Basic([Values] CloneBehavior cloneBehavior)
         {
-            UpdateTestParameters(new Dec.Config.UnitTestParameters { explicitTypes = new Type[] { typeof(SequenceWorker) } });
+            UpdateTestParameters(new UnitTestParameters { explicitTypes = new Type[] { typeof(SequenceWorker) } });
 
             var parser = new Dec.Parser();
             parser.AddString(Dec.Parser.FileType.Xml, @"

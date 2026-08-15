@@ -46,7 +46,7 @@ namespace ArborTest
         [Test]
         public void WriteOnlyDuringInit()
         {
-            UpdateTestParameters(new Dec.Config.UnitTestParameters {
+            UpdateTestParameters(new UnitTestParameters {
                 explicitTypes = new System.Type[] { typeof(WriteOnlyTestTree) }
             });
 

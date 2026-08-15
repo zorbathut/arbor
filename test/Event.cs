@@ -66,7 +66,7 @@ namespace ArborTest
         [Test]
         public void Basic([Values] CloneBehavior cloneBehavior)
         {
-            UpdateTestParameters(new Dec.Config.UnitTestParameters { explicitTypes = new System.Type[] { typeof(BasicTree) }, explicitStaticRefs = new System.Type[] { typeof(EventDecs) } });
+            UpdateTestParameters(new UnitTestParameters { explicitTypes = new System.Type[] { typeof(BasicTree) }, explicitStaticRefs = new System.Type[] { typeof(EventDecs) } });
 
             var parser = new Dec.Parser();
             parser.AddString(Dec.Parser.FileType.Xml, @"

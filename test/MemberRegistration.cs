@@ -23,7 +23,7 @@ namespace ArborTest
         [Test]
         public void CloneResetChecksum()
         {
-            UpdateTestParameters(new Dec.Config.UnitTestParameters { explicitTypes = new System.Type[] { typeof(SequenceTree) } });
+            UpdateTestParameters(new UnitTestParameters { explicitTypes = new System.Type[] { typeof(SequenceTree) } });
 
             var parser = new Dec.Parser();
             parser.AddString(Dec.Parser.FileType.Xml, @"

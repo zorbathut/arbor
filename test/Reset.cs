@@ -35,7 +35,7 @@ namespace ArborTest
         [Test]
         public void Basic([Values] CloneBehavior cloneBehavior)
         {
-            UpdateTestParameters(new Dec.Config.UnitTestParameters {
+            UpdateTestParameters(new UnitTestParameters {
                 explicitTypes = new System.Type[] { typeof(BasicTree) }
             });
 

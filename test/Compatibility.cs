@@ -47,7 +47,7 @@ namespace ArborTest
             string saved;
 
             {
-                UpdateTestParameters(new Dec.Config.UnitTestParameters { explicitTypes = new Type[] { typeof(Before.Simple) } });
+                UpdateTestParameters(new UnitTestParameters { explicitTypes = new Type[] { typeof(Before.Simple) } });
 
                 var parser = new Dec.Parser();
                 parser.AddString(Dec.Parser.FileType.Xml, @"
@@ -73,7 +73,7 @@ namespace ArborTest
             Clean();
 
             {
-                UpdateTestParameters(new Dec.Config.UnitTestParameters { explicitTypes = new Type[] { typeof(After.Simple) } });
+                UpdateTestParameters(new UnitTestParameters { explicitTypes = new Type[] { typeof(After.Simple) } });
 
                 var parser = new Dec.Parser();
                 parser.AddString(Dec.Parser.FileType.Xml, @"

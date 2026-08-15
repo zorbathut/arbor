@@ -34,7 +34,7 @@ namespace ArborTest
         [Test]
         public void SelectWorking([Values] CloneBehavior cloneBehavior)
         {
-            UpdateTestParameters(new Dec.Config.UnitTestParameters { explicitTypes = new Type[] { typeof(SelectFactory) } });
+            UpdateTestParameters(new UnitTestParameters { explicitTypes = new Type[] { typeof(SelectFactory) } });
 
             var parser = new Dec.Parser();
             parser.AddString(Dec.Parser.FileType.Xml, @"
@@ -89,7 +89,7 @@ namespace ArborTest
         [Test]
         public void SequenceWorking([Values] CloneBehavior cloneBehavior)
         {
-            UpdateTestParameters(new Dec.Config.UnitTestParameters { explicitTypes = new Type[] { typeof(SequenceFactory) } });
+            UpdateTestParameters(new UnitTestParameters { explicitTypes = new Type[] { typeof(SequenceFactory) } });
 
             var parser = new Dec.Parser();
             parser.AddString(Dec.Parser.FileType.Xml, @"
@@ -140,7 +140,7 @@ namespace ArborTest
         [Test]
         public void FunctionFullWorking([Values] CloneBehavior cloneBehavior)
         {
-            UpdateTestParameters(new Dec.Config.UnitTestParameters { explicitTypes = new Type[] { typeof(FunctionFullFactory) } });
+            UpdateTestParameters(new UnitTestParameters { explicitTypes = new Type[] { typeof(FunctionFullFactory) } });
 
             var parser = new Dec.Parser();
             parser.AddString(Dec.Parser.FileType.Xml, @"
@@ -195,7 +195,7 @@ namespace ArborTest
         [Test]
         public void FunctionSimpleInTree([Values] CloneBehavior cloneBehavior)
         {
-            UpdateTestParameters(new Dec.Config.UnitTestParameters { explicitTypes = new Type[] { typeof(FunctionSimpleFactory) } });
+            UpdateTestParameters(new UnitTestParameters { explicitTypes = new Type[] { typeof(FunctionSimpleFactory) } });
 
             var parser = new Dec.Parser();
             parser.AddString(Dec.Parser.FileType.Xml, @"
