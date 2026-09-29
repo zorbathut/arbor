@@ -17,13 +17,16 @@ namespace ArborTest
 
             handlingWarnings = false;
             handledWarning = false;
+            warningValidator = null;
 
             handlingErrors = false;
             handledError = false;
+            errorValidator = null;
         }
 
         private bool handlingWarnings = false;
         private bool handledWarning = false;
+        private Func<string, bool> warningValidator = null;
 
         private bool handlingErrors = false;
         private bool handledError = false;
@@ -35,6 +38,9 @@ namespace ArborTest
             Arbor.Config.WarningHandler = str => {
                 System.Diagnostics.Debug.Print(str);
                 Console.WriteLine(str);
+
+                // Check to see if this is considered a "valid" warning.
+                Assert.IsTrue(warningValidator == null || warningValidator(str), $"Warning message validation failed: {str}");
 
                 if (handlingWarnings)
                 {
@@ -106,11 +112,12 @@ namespace ArborTest
             field.SetValue(null, decParameters);
         }
 
-        protected void ExpectWarnings(Action action)
+        protected void ExpectWarnings(Action action, Func<string, bool> warningValidator = null)
         {
             Assert.IsFalse(handlingWarnings);
             handlingWarnings = true;
             handledWarning = false;
+            this.warningValidator = warningValidator;
 
             action();
 
@@ -118,6 +125,7 @@ namespace ArborTest
             Assert.IsTrue(handledWarning);
             handlingWarnings = false;
             handledWarning = false;
+            this.warningValidator = null;
         }
 
         protected void ExpectErrors(Action action, Func<string, bool> errorValidator = null)

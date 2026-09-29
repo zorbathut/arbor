@@ -24,7 +24,7 @@ namespace Arbor
         [NonSerialized] internal List<(Type type, string name)> blackboardRegistrations = new();
         [NonSerialized] internal List<BlackboardIdentifier> blackboardLocalId = new();
         [NonSerialized] internal Dictionary<ulong, int> blackboardLocalIdLookup = new Dictionary<ulong, int>();
-        [NonSerialized] internal ulong blackboardSignature = 0;
+        [NonSerialized] internal ulong signature = 0;
 
         [NonSerialized] internal Blackboard blackboardTemplate;
 
@@ -36,7 +36,7 @@ namespace Arbor
                 return;
             }
 
-            if (blackboardSignature != 0)
+            if (signature != 0)
             {
                 Dbg.Err("Cannot add more blackboard parameters after the tree has been loaded");
                 return;
@@ -105,9 +105,6 @@ namespace Arbor
                 Blackboard.writeOnly = false;
             }
 
-            // register blackboard hash
-            blackboardSignature = Dec.Recorder.Checksum(blackboardRegistrations);
-
             // for the sake of a little extra long-term efficiency
             nodes = nodeList.ToArray();
 
@@ -141,6 +138,30 @@ namespace Arbor
                     }
                 }
             }
+
+            // Covers both the blackboard registrations and each node's Worker layout. A saved enumerator is recorded by its compiler-generated field names (`<zone>5__2`), which differ between build configurations and shift when a Worker's locals are edited; Dec would then resume it mid-flight with the unmatched locals left at default. Hashing those names lets State.Record notice and reset instead. Only the Worker's own state machine is covered: an edit that only adds or reorders `yield`s (renumbering `<>1__state` without renaming anything), or one inside a lambda or a helper iterator the Worker drives, goes unnoticed.
+            signature = Dec.Recorder.Checksum((blackboardRegistrations, nodes.Select(NodeLayout).ToList()));
+        }
+
+        // What Dec records for a node's Worker enumerator: the state machine's type, and each field by name and declared type. Read off a fresh enumerator, which a C# iterator hands out without running any of the Worker's body.
+        internal static string NodeLayout(Node node)
+        {
+            // A Worker that isn't recordable can't be saved mid-flight in the first place, so its type is all there is to match.
+            if (!node.GetType().GetMethod(nameof(Node.Worker), Type.EmptyTypes).IsDefined(typeof(Dec.RecorderEnumerator.RecordableEnumerableAttribute), false))
+            {
+                return node.GetType().ToString();
+            }
+
+            var root = Dec.Reflection.Enumerate(node.Worker().GetEnumerator());
+
+            var builder = new System.Text.StringBuilder();
+            builder.Append(root.Value.GetType()).Append('\n');
+            foreach (var entry in root.Children)
+            {
+                builder.Append(entry.Label).Append(':').Append(entry.DeclaredType).Append('\n');
+            }
+
+            return builder.ToString();
         }
     }
 }

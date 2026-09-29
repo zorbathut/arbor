@@ -215,16 +215,24 @@ namespace Arbor
 
             if (recorder.Mode == Dec.Recorder.Direction.Write)
             {
-                recorder.Record(ref tree.blackboardSignature, "signature");
+                recorder.Record(ref tree.signature, "signature");
             }
             else if (recorder.Mode == Dec. Recorder.Direction.Read)
             {
                 ulong sig = 0;
                 recorder.Record(ref sig, "signature");
 
-                if (sig != tree.blackboardSignature)
+                if (sig != tree.signature)
                 {
-                    Dbg.Wrn("Blackboard signature mismatch; this is likely due to a change in the tree structure or blackboard parameters. Resetting.");
+                    Dbg.Wrn($"{tree}: signature mismatch; this is likely due to a change in the tree structure, blackboard parameters, or Worker code, or a save from a different build configuration. Resetting.");
+
+                    // avoid extra unknown-field warnings
+                    recorder.Ignore(nameof(enumerators));
+                    recorder.Ignore(nameof(blackboard));
+                    recorder.Ignore(nameof(active));
+                    recorder.Ignore(nameof(debugLastStates));
+                    recorder.Ignore(nameof(debugLastStateFrames));
+                    recorder.Ignore(nameof(debugCurrentFrame));
 
                     ResetToStart();
                     return;
@@ -241,14 +249,6 @@ namespace Arbor
             recorder.Record(ref debugLastStates, nameof(debugLastStates));
             recorder.Record(ref debugLastStateFrames, nameof(debugLastStateFrames));
             recorder.Record(ref debugCurrentFrame, nameof(debugCurrentFrame));
-
-            if (enumerators.Length != tree.nodes.Length)
-            {
-                Dbg.Wrn("Node count changed; resetting state.");
-                enumerators = new IEnumerator<Result>[tree.nodes.Length];
-                debugLastStates = new DebugNodeState?[tree.nodes.Length];
-                debugLastStateFrames = new int[tree.nodes.Length];
-            }
         }
     }
 }
