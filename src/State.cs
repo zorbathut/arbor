@@ -33,8 +33,24 @@ namespace Arbor
         internal Arbor.TreeDec tree;
         public TreeDec Tree => tree;
 
-        // local state
-        internal IEnumerator<Result>[] enumerators;
+        internal struct NodeEntry : Dec.IRecordable
+        {
+            public IEnumerator<Result> enumerator;
+
+            // debug visualization: how the node last finished, and the debugCurrentFrame it finished on
+            public DebugNodeState? debugState;
+            public int debugFrame;
+
+            public void Record(Dec.Recorder recorder)
+            {
+                recorder.Record(ref enumerator, nameof(enumerator));
+                recorder.Record(ref debugState, nameof(debugState));
+                recorder.Record(ref debugFrame, nameof(debugFrame));
+            }
+        }
+
+        // local state; nodeEntries is indexed by Node.nodeIndex
+        internal NodeEntry[] nodeEntries;
         internal Blackboard blackboard;
 
         // refreshed on every update; used for event triggers
@@ -44,8 +60,6 @@ namespace Arbor
         internal List<Node> stack = new List<Node>();
 
         // debug visualization state (for now, serialized)
-        internal DebugNodeState?[] debugLastStates;
-        internal int[] debugLastStateFrames;
         internal int debugCurrentFrame;
 
         private State() { } // needed for Dec record
@@ -66,15 +80,12 @@ namespace Arbor
 
         private void ResetToStart()
         {
-            enumerators = new IEnumerator<Result>[tree.nodes.Length];
+            nodeEntries = new NodeEntry[tree.nodes.Length];
             active = new List<int>();
 
             // get a copy of the initial blackboard
             blackboard = Dec.Recorder.Clone(tree.blackboardTemplate);
 
-            // debug visualization state
-            debugLastStates = new DebugNodeState?[tree.nodes.Length];
-            debugLastStateFrames = new int[tree.nodes.Length];
             debugCurrentFrame = 0;
         }
 
@@ -189,9 +200,8 @@ namespace Arbor
             {
                 return (DebugNodeState.Working, 0);
             }
-            DebugNodeState? lastState = debugLastStates?[node.nodeIndex];
-            int frame = debugLastStateFrames?[node.nodeIndex] ?? 0;
-            return (lastState, debugCurrentFrame - frame);
+            var entry = nodeEntries[node.nodeIndex];
+            return (entry.debugState, debugCurrentFrame - entry.debugFrame);
         }
 
         public void Record(Dec.Recorder recorder)
@@ -201,12 +211,10 @@ namespace Arbor
             {
                 // just copy it all over
                 recorder.Record(ref tree, nameof(tree));
-                recorder.Record(ref enumerators, nameof(enumerators));
+                recorder.Record(ref nodeEntries, nameof(nodeEntries));
                 recorder.Record(ref blackboard, nameof(blackboard));
                 recorder.Record(ref active, nameof(active));
 
-                recorder.Record(ref debugLastStates, nameof(debugLastStates));
-                recorder.Record(ref debugLastStateFrames, nameof(debugLastStateFrames));
                 recorder.Record(ref debugCurrentFrame, nameof(debugCurrentFrame));
                 return;
             }
@@ -226,15 +234,7 @@ namespace Arbor
                 {
                     Dbg.Wrn($"{tree}: signature mismatch; this is likely due to a change in the tree structure, blackboard parameters, or Worker code, or a save from a different build configuration. Resetting.");
 
-                    // avoid extra unknown-field warnings
-                    recorder.Ignore(nameof(enumerators));
-                    recorder.Ignore(nameof(blackboard));
-                    recorder.Ignore(nameof(active));
-                    recorder.Ignore(nameof(debugLastStates));
-                    recorder.Ignore(nameof(debugLastStateFrames));
-                    recorder.Ignore(nameof(debugCurrentFrame));
-
-                    ResetToStart();
+                    ResetDiscardingSaved(recorder);
                     return;
                 }
             }
@@ -242,13 +242,38 @@ namespace Arbor
             // this is needed for identifier serialization
             using var scope = new Scope(this);
 
-            recorder.Record(ref enumerators, nameof(enumerators));
+            // Dec leaves a field alone when its element is absent, so clear it first: still null afterward means a save written before nodeEntries existed, whose per-node state the tree just starts over without. (Cloning returned above.)
+            bool loading = recorder.Mode == Dec.Recorder.Direction.Read;
+            if (loading)
+            {
+                nodeEntries = null;
+            }
+            recorder.Record(ref nodeEntries, nameof(nodeEntries));
+            if (loading && nodeEntries == null)
+            {
+                ResetDiscardingSaved(recorder);
+                return;
+            }
             recorder.Record(ref blackboard, nameof(blackboard));
             recorder.Record(ref active, nameof(active));
 
-            recorder.Record(ref debugLastStates, nameof(debugLastStates));
-            recorder.Record(ref debugLastStateFrames, nameof(debugLastStateFrames));
             recorder.Record(ref debugCurrentFrame, nameof(debugCurrentFrame));
+        }
+
+        // Starts the tree over in place of whatever the save holds, marking the saved fields read so Dec doesn't report them as unknown
+        private void ResetDiscardingSaved(Dec.Recorder recorder)
+        {
+            recorder.Ignore(nameof(nodeEntries));
+            recorder.Ignore(nameof(blackboard));
+            recorder.Ignore(nameof(active));
+            recorder.Ignore(nameof(debugCurrentFrame));
+
+            // the per-node arrays of saves that predate nodeEntries
+            recorder.Ignore("enumerators");
+            recorder.Ignore("debugLastStates");
+            recorder.Ignore("debugLastStateFrames");
+
+            ResetToStart();
         }
     }
 }

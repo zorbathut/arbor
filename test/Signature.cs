@@ -178,17 +178,18 @@ namespace ArborTest
             state.Update();
             using (new State.Scope(state))
             {
-                for (int nodeId = 0; nodeId < state.enumerators.Length; ++nodeId)
+                for (int nodeId = 0; nodeId < state.nodeEntries.Length; ++nodeId)
                 {
-                    if (state.enumerators[nodeId] == null)
+                    ref var enumerator = ref state.nodeEntries[nodeId].enumerator;
+                    if (enumerator == null)
                     {
-                        state.enumerators[nodeId] = Tree.nodes[nodeId].Worker().GetEnumerator();
-                        state.enumerators[nodeId].MoveNext();
+                        enumerator = Tree.nodes[nodeId].Worker().GetEnumerator();
+                        enumerator.MoveNext();
                     }
                 }
             }
 
-            Assert.IsTrue(state.enumerators.All(enumerator => enumerator != null));
+            Assert.IsTrue(state.nodeEntries.All(entry => entry.enumerator != null));
 
             return state;
         }
@@ -221,16 +222,47 @@ namespace ArborTest
 
             var read = ReadExpectingOneWarning(serialized, "signature mismatch");
 
-            Assert.IsTrue(read.enumerators.All(enumerator => enumerator == null), "Every enumerator should restart from scratch");
+            Assert.AreEqual(Tree.nodes.Length, read.nodeEntries.Length);
+            Assert.IsTrue(read.nodeEntries.All(entry => entry.enumerator == null && entry.debugState == null), "Every node should restart from scratch");
             Assert.IsEmpty(read.active);
-            Assert.AreEqual(Tree.nodes.Length, read.debugLastStates.Length);
-            Assert.AreEqual(Tree.nodes.Length, read.debugLastStateFrames.Length);
             Assert.AreEqual(0, read.Blackboard().Get(Factory.value), "The blackboard goes back to the template along with everything else");
 
             // And it picks up cleanly from the top.
             read.Update();
             read.Update();
-            Assert.IsNotNull(read.enumerators[0]);
+            Assert.IsNotNull(read.nodeEntries[0].enumerator);
+        }
+
+        // Saves from before State kept one entry per node recorded three parallel arrays instead: the enumerators and the two debug arrays. Those load without warnings and restart their trees.
+        [Test]
+        public void Read_OldPerNodeArrays_ResetsCleanly()
+        {
+            var serialized = WithElement(Dec.Recorder.Write(CreateRunningState()), "nodeEntries", entries =>
+            {
+                var items = entries.Elements("li").ToList();
+                XElement OldArray(string name, string field)
+                {
+                    return new XElement(name, items.Select(item =>
+                    {
+                        var value = new XElement(item.Element(field) ?? new XElement(field));
+                        value.Name = "li";
+                        return value;
+                    }));
+                }
+                entries.AddBeforeSelf(OldArray("enumerators", "enumerator"), OldArray("debugLastStates", "debugState"), OldArray("debugLastStateFrames", "debugFrame"));
+                entries.Remove();
+            });
+
+            // Outside ExpectWarnings, any warning or error fails the test.
+            var read = Dec.Recorder.Read<State>(serialized);
+
+            Assert.AreEqual(Tree.nodes.Length, read.nodeEntries.Length);
+            Assert.IsTrue(read.nodeEntries.All(entry => entry.enumerator == null), "Every node should restart from scratch");
+            Assert.IsEmpty(read.active);
+            Assert.AreEqual(0, read.Blackboard().Get(Factory.value), "The blackboard goes back to the template along with everything else");
+
+            read.Update();
+            Assert.IsNotNull(read.nodeEntries[0].enumerator);
         }
 
         [Test]
@@ -241,7 +273,7 @@ namespace ArborTest
             // Fails on any checksum difference, so this also shows nothing got reset.
             DoCloneBehavior(cloneBehavior, ref state);
 
-            Assert.IsTrue(state.enumerators.All(enumerator => enumerator != null), "A matching state should resume mid-flight");
+            Assert.IsTrue(state.nodeEntries.All(entry => entry.enumerator != null), "A matching state should resume mid-flight");
             Assert.AreEqual(7, state.Blackboard().Get(Factory.value));
         }
 
@@ -276,11 +308,11 @@ namespace ArborTest
         public void NodeLayout_MatchesRecordedEnumerators()
         {
             var state = CreateRunningState();
-            var enumerators = Dec.Reflection.Enumerate(state).Children.Single(entry => entry.Label == "enumerators");
+            var nodeEntries = Dec.Reflection.Enumerate(state).Children.Single(entry => entry.Label == "nodeEntries");
 
             for (int nodeId = 0; nodeId < Tree.nodes.Length; ++nodeId)
             {
-                var recorded = enumerators.Children[nodeId];
+                var recorded = nodeEntries.Children[nodeId].Children.Single(entry => entry.Label == "enumerator");
                 var layout = recorded.Value.GetType() + "\n" + string.Concat(recorded.Children.Select(entry => $"{entry.Label}:{entry.DeclaredType}\n"));
 
                 Assert.AreEqual(TreeDec.NodeLayout(Tree.nodes[nodeId]), layout);

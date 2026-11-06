@@ -62,7 +62,7 @@ namespace Arbor
             int activeIndex = state.active.Count;
             state.active.Add(nodeIndex);
 
-            ref var currentWorker = ref state.enumerators[nodeIndex];
+            ref var currentWorker = ref state.nodeEntries[nodeIndex].enumerator;
             bool moved;
             try
             {
@@ -93,8 +93,8 @@ namespace Arbor
                 }
 
                 state.active[activeIndex] = -1; // nope, not active anymore
-                state.debugLastStates[nodeIndex] = DebugNodeState.Failure;
-                state.debugLastStateFrames[nodeIndex] = state.debugCurrentFrame;
+                state.nodeEntries[nodeIndex].debugState = DebugNodeState.Failure;
+                state.nodeEntries[nodeIndex].debugFrame = state.debugCurrentFrame;
                 return Result.Failure;
             }
 
@@ -111,10 +111,10 @@ namespace Arbor
                     Dbg.Ex(e);
                 }
                 state.active[activeIndex] = -1; // nope, not active anymore
-                state.debugLastStates[nodeIndex] = result == Result.Success
+                state.nodeEntries[nodeIndex].debugState = result == Result.Success
                     ? DebugNodeState.Success
                     : DebugNodeState.Failure;
-                state.debugLastStateFrames[nodeIndex] = state.debugCurrentFrame;
+                state.nodeEntries[nodeIndex].debugFrame = state.debugCurrentFrame;
             }
 
             return result;
@@ -151,7 +151,7 @@ namespace Arbor
         public virtual void Reset()
         {
             var state = State.Current.Value;
-            ref var currentWorker = ref state.enumerators[nodeIndex];
+            ref var currentWorker = ref state.nodeEntries[nodeIndex].enumerator;
 
             // already done, stop recursiving
             if (currentWorker == null)
@@ -160,8 +160,8 @@ namespace Arbor
             }
 
             // Mark as terminated since we're being reset mid-execution
-            state.debugLastStates[nodeIndex] = DebugNodeState.Terminated;
-            state.debugLastStateFrames[nodeIndex] = state.debugCurrentFrame;
+            state.nodeEntries[nodeIndex].debugState = DebugNodeState.Terminated;
+            state.nodeEntries[nodeIndex].debugFrame = state.debugCurrentFrame;
 
             currentWorker.Dispose();
             currentWorker = null;
