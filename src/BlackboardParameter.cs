@@ -16,7 +16,7 @@ namespace Arbor
                 recorder.RecordAsThis(ref id);
 
                 // Remap this according to our state's tree's remap
-                var assign = State.Current.Value.tree.blackboardLocalId[id];
+                var assign = State.Current.Value.tree.blackboardRegistrations[id].id;
                 uid = assign.uid;
                 label = assign.label;
             }

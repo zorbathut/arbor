@@ -122,12 +122,12 @@ namespace Arbor
             {
                 if (data.TryGetValue(kvp.Key, out var value))
                 {
-                    yield return new KeyValuePair<string, object>(tree.blackboardRegistrations[tree.blackboardLocalIdLookup[kvp.Key]].name, value);
+                    yield return new KeyValuePair<string, object>(tree.blackboardRegistrations[tree.blackboardLocalIdLookup[kvp.Key]].id.label, value);
                 }
                 else
                 {
                     // if the data is missing, we return a default value of the type
-                    yield return new KeyValuePair<string, object>(tree.blackboardRegistrations[tree.blackboardLocalIdLookup[kvp.Key]].name, Activator.CreateInstance(kvp.Value));
+                    yield return new KeyValuePair<string, object>(tree.blackboardRegistrations[tree.blackboardLocalIdLookup[kvp.Key]].id.label, Activator.CreateInstance(kvp.Value));
                 }
             }
         }
@@ -166,19 +166,16 @@ namespace Arbor
                 {
                     if (canonData[i] != null)
                     {
-                        data[State.Current.Value.tree.blackboardLocalId[i].uid] = canonData[i];
+                        data[State.Current.Value.tree.blackboardRegistrations[i].id.uid] = canonData[i];
                     }
                 }
 
                 // now we need to yank types out of the tree
                 var tree = State.Current.Value.tree;
                 types = new Dictionary<ulong, Type>();
-                for (int i = 0; i < tree.blackboardRegistrations.Count; i++)
+                foreach (var (type, id) in tree.blackboardRegistrations)
                 {
-                    var type = tree.blackboardRegistrations[i].type;
-                    var uid = tree.blackboardLocalId[i].uid;
-
-                    types[uid] = type;
+                    types[id.uid] = type;
                 }
             }
         }
