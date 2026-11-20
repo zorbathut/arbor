@@ -24,6 +24,7 @@ namespace Arbor
         [NonSerialized] internal List<(Type type, BlackboardIdentifier id)> blackboardRegistrations = new();
         [NonSerialized] internal Dictionary<ulong, int> blackboardLocalIdLookup = new Dictionary<ulong, int>();
         [NonSerialized] internal ulong signature = 0;
+        [NonSerialized] internal ulong signatureStructure = 0;
 
         [NonSerialized] internal Blackboard blackboardTemplate;
 
@@ -137,9 +138,16 @@ namespace Arbor
                 }
             }
 
-            // Covers both the blackboard registrations and each node's Worker layout. A saved enumerator is recorded by its compiler-generated field names (`<zone>5__2`), which differ between build configurations and shift when a Worker's locals are edited; Dec would then resume it mid-flight with the unmatched locals left at default. Hashing those names lets State.Record notice and reset instead. Only the Worker's own state machine is covered: an edit that only adds or reorders `yield`s (renumbering `<>1__state` without renaming anything), or one inside a lambda or a helper iterator the Worker drives, goes unnoticed.
+            // Two signatures, which State.Record compares against a save's to decide how much of it to trust.
+            //
+            // `signature` covers both the blackboard registrations and each node's Worker layout. A saved enumerator is recorded by its compiler-generated field names (`<zone>5__2`), which differ between build configurations and shift when a Worker's locals are edited; Dec would then resume it mid-flight with the unmatched locals left at default. Hashing those names lets State.Record notice and restart instead. Only the Worker's own state machine is covered: an edit that only adds or reorders `yield`s (renumbering `<>1__state` without renaming anything), or one inside a lambda or a helper iterator the Worker drives, goes unnoticed. Its formula is what older saves carry, so changing it restarts every tree in every old save.
+            //
+            // `signatureStructure` covers the registrations and the node types in order, leaving out the Worker layouts. It decides whether the saved blackboard still reads back position for position; when it matches but `signature` doesn't, the load keeps the blackboard and restarts only the nodes. It also catches what `signature` can't, a node swapped for a subclass that inherits the same Worker. It can't tell a parameter whose meaning changed under the same type and label, so a change of meaning wants a new label.
+            //
             // The registrations go in as (type, label): the uid comes from a process-wide counter, so it would make the signature differ from run to run.
-            signature = Dec.Recorder.Checksum((blackboardRegistrations.Select(registration => (registration.type, registration.id.label)).ToList(), nodes.Select(NodeLayout).ToList()));
+            var registrations = blackboardRegistrations.Select(registration => (registration.type, registration.id.label)).ToList();
+            signature = Dec.Recorder.Checksum((registrations, nodes.Select(NodeLayout).ToList()));
+            signatureStructure = Dec.Recorder.Checksum((registrations, nodes.Select(node => node.GetType().ToString()).ToList()));
         }
 
         // What Dec records for a node's Worker enumerator: the state machine's type, and each field by name and declared type. Read off a fresh enumerator, which a C# iterator hands out without running any of the Worker's body.

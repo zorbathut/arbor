@@ -67,6 +67,9 @@ namespace ArborTest
         }
     }
 
+    // Inherits SignatureHoisted's Worker unchanged, so it records the same enumerator; only the node type tells them apart.
+    public partial class SignatureHoistedSubclass : SignatureHoisted { }
+
     // Covers how an Arbor.State read from a save copes with a tree (blackboard or Workers) that no longer matches the one it was written with.
     [TestFixture]
     [Dec.RecorderEnumerator.RecordableClosures]
@@ -137,10 +140,18 @@ namespace ArborTest
             }
         }
 
+        public class FactoryOrderASubclass : TreeDec.ITreeFactory
+        {
+            public Node Create(TreeDec tree)
+            {
+                return new Arbor.Sequence(new SignatureHoistedSubclass(), new SignatureHelper());
+            }
+        }
+
         [SetUp]
         public void Setup()
         {
-            UpdateTestParameters(new UnitTestParameters { explicitTypes = new Type[] { typeof(Factory), typeof(FactoryRebuilt), typeof(FactoryNoBlackboard), typeof(FactoryOrderA), typeof(FactoryOrderB) } });
+            UpdateTestParameters(new UnitTestParameters { explicitTypes = new Type[] { typeof(Factory), typeof(FactoryRebuilt), typeof(FactoryNoBlackboard), typeof(FactoryOrderA), typeof(FactoryOrderB), typeof(FactoryOrderASubclass) } });
 
             var parser = new Dec.Parser();
             parser.AddString(Dec.Parser.FileType.Xml, @"
@@ -159,6 +170,9 @@ namespace ArborTest
                     </Arbor.TreeDec>
                     <Arbor.TreeDec decName=""TestOrderB"">
                         <worker class=""ArborTest.Signature.FactoryOrderB"" />
+                    </Arbor.TreeDec>
+                    <Arbor.TreeDec decName=""TestOrderASubclass"">
+                        <worker class=""ArborTest.Signature.FactoryOrderASubclass"" />
                     </Arbor.TreeDec>
                 </Decs>
             ");
@@ -215,22 +229,135 @@ namespace ArborTest
             return read;
         }
 
-        [Test]
-        public void Read_SignatureMismatch_ResetsCleanly()
+        // How a save's tree differs from this build's.
+        public enum SignatureEdit
         {
-            var serialized = WithElement(Dec.Recorder.Write(CreateRunningState()), "signature", el => el.Value = "12345");
+            // Written before saves recorded the structure signature, so nothing says what kind of change it was.
+            Legacy,
 
-            var read = ReadExpectingOneWarning(serialized, "signature mismatch");
+            // Only Worker internals differ: the same nodes and blackboard parameters.
+            Workers,
 
+            // The nodes or blackboard parameters differ.
+            Structure,
+        }
+
+        // A save of a running state, altered as though written by a build whose tree differs in the way `edit` says.
+        private static string WriteWithSignatureMismatch(SignatureEdit edit)
+        {
+            var doc = XDocument.Parse(Dec.Recorder.Write(CreateRunningState()));
+            void Bump(string name)
+            {
+                var element = doc.Descendants(name).Single();
+                element.Value = (ulong.Parse(element.Value) + 1).ToString();
+            }
+
+            Bump("signature");
+            switch (edit)
+            {
+                case SignatureEdit.Legacy:
+                    doc.Descendants("signatureStructure").Single().Remove();
+                    break;
+                case SignatureEdit.Workers:
+                    break;
+                case SignatureEdit.Structure:
+                    Bump("signatureStructure");
+                    break;
+            }
+
+            return doc.ToString();
+        }
+
+        private static void AssertNodesRestarted(State read)
+        {
             Assert.AreEqual(Tree.nodes.Length, read.nodeEntries.Length);
             Assert.IsTrue(read.nodeEntries.All(entry => entry.enumerator == null && entry.debugState == null), "Every node should restart from scratch");
             Assert.IsEmpty(read.active);
+            Assert.AreEqual(0, read.debugCurrentFrame);
+        }
+
+        // A save that can't vouch for its structure, or whose structure changed, starts over blackboard and all.
+        [Test]
+        public void Read_StructureMismatch_ResetsFully([Values(SignatureEdit.Legacy, SignatureEdit.Structure)] SignatureEdit edit)
+        {
+            var read = ReadExpectingOneWarning(WriteWithSignatureMismatch(edit), "signature mismatch;");
+
+            AssertNodesRestarted(read);
             Assert.AreEqual(0, read.Blackboard().Get(Factory.value), "The blackboard goes back to the template along with everything else");
+            Assert.AreEqual(State.LoadReset.Full, read.LoadResetConsume());
+            Assert.AreEqual(State.LoadReset.None, read.LoadResetConsume(), "Consuming clears it");
 
             // And it picks up cleanly from the top.
             read.Update();
             read.Update();
             Assert.IsNotNull(read.nodeEntries[0].enumerator);
+        }
+
+        // Matching structure with different Worker code (edited locals, another build configuration) restarts the nodes but keeps the saved blackboard.
+        [Test]
+        public void Read_WorkerMismatch_KeepsBlackboard()
+        {
+            var read = ReadExpectingOneWarning(WriteWithSignatureMismatch(SignatureEdit.Workers), "Worker code only");
+
+            AssertNodesRestarted(read);
+            Assert.AreEqual(7, read.Blackboard().Get(Factory.value), "The blackboard reads back as saved");
+            Assert.AreEqual(State.LoadReset.Nodes, read.LoadResetConsume());
+            Assert.AreEqual(State.LoadReset.None, read.LoadResetConsume(), "Consuming clears it");
+
+            read.Update();
+            read.Update();
+            Assert.IsNotNull(read.nodeEntries[0].enumerator);
+
+            // Fully restored, it round-trips like any other state.
+            var state = read;
+            DoCloneBehavior(CloneBehavior.WriteRead, ref state);
+            Assert.AreEqual(7, state.Blackboard().Get(Factory.value));
+        }
+
+        // A State a load reset hasn't been recovered by its host yet; copying it reports once, naming the tree, and consuming first keeps it quiet.
+        [Test]
+        public void Copy_Unrecovered_Errors([Values(SignatureEdit.Legacy, SignatureEdit.Workers)] SignatureEdit edit, [Values(CloneBehavior.Clone, CloneBehavior.WriteRead)] CloneBehavior cloneBehavior)
+        {
+            void Copy(State state)
+            {
+                if (cloneBehavior == CloneBehavior.Clone)
+                {
+                    Dec.Recorder.Clone(state);
+                }
+                else
+                {
+                    Dec.Recorder.Write(state);
+                }
+            }
+
+            var serialized = WriteWithSignatureMismatch(edit);
+
+            var unrecovered = ReadExpectingOneWarning(serialized, "signature mismatch");
+            int errors = 0;
+            ExpectErrors(() => Copy(unrecovered), msg =>
+            {
+                errors++;
+                return msg.Contains(Tree.DecName) && msg.Contains("before its host recovered it");
+            });
+            Assert.AreEqual(1, errors);
+
+            // once only, so a held original doesn't report on every later copy
+            Copy(unrecovered);
+            Assert.AreEqual(State.LoadReset.None, unrecovered.LoadResetConsume());
+
+            var recovered = ReadExpectingOneWarning(serialized, "signature mismatch");
+            Assert.AreNotEqual(State.LoadReset.None, recovered.LoadResetConsume());
+            Copy(recovered);
+        }
+
+        [Test]
+        public void LoadReset_NoneUnlessReset()
+        {
+            var state = CreateRunningState();
+            Assert.AreEqual(State.LoadReset.None, state.LoadResetConsume(), "A fresh state wasn't loaded at all");
+
+            DoCloneBehavior(CloneBehavior.WriteRead, ref state);
+            Assert.AreEqual(State.LoadReset.None, state.LoadResetConsume(), "A faithful load discards nothing");
         }
 
         // Saves from before State kept one entry per node recorded three parallel arrays instead: the enumerators and the two debug arrays. Those load without warnings and restart their trees.
@@ -260,6 +387,7 @@ namespace ArborTest
             Assert.IsTrue(read.nodeEntries.All(entry => entry.enumerator == null), "Every node should restart from scratch");
             Assert.IsEmpty(read.active);
             Assert.AreEqual(0, read.Blackboard().Get(Factory.value), "The blackboard goes back to the template along with everything else");
+            Assert.AreEqual(State.LoadReset.Full, read.LoadResetConsume());
 
             read.Update();
             Assert.IsNotNull(read.nodeEntries[0].enumerator);
@@ -285,15 +413,42 @@ namespace ArborTest
         }
 
         [Test]
+        public void SignatureStructure_SameLayout_Matches()
+        {
+            Assert.AreEqual(Tree.signatureStructure, Dec.Database<TreeDec>.Get("TestRebuilt").signatureStructure);
+        }
+
+        [Test]
         public void Signature_Blackboard_Differs()
         {
             Assert.AreNotEqual(Tree.signature, Dec.Database<TreeDec>.Get("TestNoBlackboard").signature);
+            Assert.AreNotEqual(Tree.signatureStructure, Dec.Database<TreeDec>.Get("TestNoBlackboard").signatureStructure);
         }
 
         [Test]
         public void Signature_NodeOrder_Differs()
         {
             Assert.AreNotEqual(Dec.Database<TreeDec>.Get("TestOrderA").signature, Dec.Database<TreeDec>.Get("TestOrderB").signature);
+            Assert.AreNotEqual(Dec.Database<TreeDec>.Get("TestOrderA").signatureStructure, Dec.Database<TreeDec>.Get("TestOrderB").signatureStructure);
+        }
+
+        // A node swapped for a subclass that inherits its Worker records the same enumerator, so only the structure signature notices, and the load starts over in full.
+        [Test]
+        public void SignatureStructure_InheritedWorker_ResetsFully()
+        {
+            var original = Dec.Database<TreeDec>.Get("TestOrderA");
+            var swapped = Dec.Database<TreeDec>.Get("TestOrderASubclass");
+            Assert.AreEqual(original.signature, swapped.signature);
+            Assert.AreNotEqual(original.signatureStructure, swapped.signatureStructure);
+
+            var state = new State(original);
+            state.Update();
+            var serialized = WithElement(Dec.Recorder.Write(state), "tree", el => el.Value = swapped.DecName);
+
+            var read = ReadExpectingOneWarning(serialized, "signature mismatch;");
+            Assert.AreSame(swapped, read.Tree);
+            Assert.IsTrue(read.nodeEntries.All(entry => entry.enumerator == null));
+            Assert.AreEqual(State.LoadReset.Full, read.LoadResetConsume());
         }
 
         // Every node type already differs by name; this is what shows the hoisted locals themselves are in there.

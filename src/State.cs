@@ -62,6 +62,21 @@ namespace Arbor
         // debug visualization state (for now, serialized)
         internal int debugCurrentFrame;
 
+        // How much of the saved state a load had to discard.
+        public enum LoadReset
+        {
+            None,
+
+            // The nodes started over, discarding the Workers that were running; the blackboard is the saved one.
+            Nodes,
+
+            // The whole tree started over: the blackboard is back to the template, missing whatever the host put there when it created this State.
+            Full,
+        }
+
+        // Set by a load that discarded saved state. Either way the discarded Workers were never disposed, and after a Full reset the blackboard needs its host's values back, so the host has to recover the State before anything else sees it. Never recorded, since it must not outlive the load that set it; Record reports a State still carrying it.
+        private LoadReset loadReset;
+
         private State() { } // needed for Dec record
         public State(TreeDec tree)
         {
@@ -80,12 +95,17 @@ namespace Arbor
 
         private void ResetToStart()
         {
-            nodeEntries = new NodeEntry[tree.nodes.Length];
-            active = new List<int>();
+            ResetNodesToStart();
 
             // get a copy of the initial blackboard
             blackboard = Dec.Recorder.Clone(tree.blackboardTemplate);
+        }
 
+        // Every node back to not having run, leaving the blackboard alone
+        private void ResetNodesToStart()
+        {
+            nodeEntries = new NodeEntry[tree.nodes.Length];
+            active = new List<int>();
             debugCurrentFrame = 0;
         }
 
@@ -175,6 +195,14 @@ namespace Arbor
             }
         }
 
+        // How much of this State a load started over, if its host hasn't recovered it yet; clears it, so the caller takes on that job.
+        public LoadReset LoadResetConsume()
+        {
+            var result = loadReset;
+            loadReset = LoadReset.None;
+            return result;
+        }
+
         public Blackboard Blackboard()
         {
             return blackboard;
@@ -206,6 +234,14 @@ namespace Arbor
 
         public void Record(Dec.Recorder recorder)
         {
+            if (loadReset != LoadReset.None && recorder.Mode == Dec.Recorder.Direction.Write)
+            {
+                Dbg.Err($"{tree}: copied after being reset on load ({loadReset}) but before its host recovered it");
+
+                // once per State is plenty; a held original would otherwise report on every later copy
+                loadReset = LoadReset.None;
+            }
+
             // this ends up being complicated
             if (recorder.Intent == Dec.Recorder.Purpose.Cloning)
             {
@@ -221,26 +257,49 @@ namespace Arbor
 
             recorder.Record(ref tree, nameof(tree));
 
+            bool restartNodes = false;
             if (recorder.Mode == Dec.Recorder.Direction.Write)
             {
                 recorder.Record(ref tree.signature, "signature");
+                recorder.Record(ref tree.signatureStructure, "signatureStructure");
             }
-            else if (recorder.Mode == Dec. Recorder.Direction.Read)
+            else if (recorder.Mode == Dec.Recorder.Direction.Read)
             {
                 ulong sig = 0;
                 recorder.Record(ref sig, "signature");
 
-                if (sig != tree.signature)
+                // absent from saves written before it existed, which then can't say what kind of change it was, so only a matching `signature` vouches for their structure
+                ulong? sigStructure = null;
+                recorder.Record(ref sigStructure, "signatureStructure");
+
+                bool structureMatches = sigStructure.HasValue ? sigStructure == tree.signatureStructure : sig == tree.signature;
+                if (!structureMatches)
                 {
                     Dbg.Wrn($"{tree}: signature mismatch; this is likely due to a change in the tree structure, blackboard parameters, or Worker code, or a save from a different build configuration. Resetting.");
 
                     ResetDiscardingSaved(recorder);
                     return;
                 }
+
+                if (sig != tree.signature)
+                {
+                    Dbg.Wrn($"{tree}: signature mismatch in Worker code only; this is likely due to a change in a Worker's locals, or a save from a different build configuration. Restarting its nodes and keeping its blackboard.");
+                    restartNodes = true;
+                }
             }
 
             // this is needed for identifier serialization
             using var scope = new Scope(this);
+
+            if (restartNodes)
+            {
+                IgnoreSavedNodes(recorder);
+                ResetNodesToStart();
+                loadReset = LoadReset.Nodes;
+
+                recorder.Record(ref blackboard, nameof(blackboard));
+                return;
+            }
 
             // Dec leaves a field alone when its element is absent, so clear it first: still null afterward means a save written before nodeEntries existed, whose per-node state the tree just starts over without. (Cloning returned above.)
             bool loading = recorder.Mode == Dec.Recorder.Direction.Read;
@@ -263,8 +322,17 @@ namespace Arbor
         // Starts the tree over in place of whatever the save holds, marking the saved fields read so Dec doesn't report them as unknown
         private void ResetDiscardingSaved(Dec.Recorder recorder)
         {
-            recorder.Ignore(nameof(nodeEntries));
+            IgnoreSavedNodes(recorder);
             recorder.Ignore(nameof(blackboard));
+
+            ResetToStart();
+            loadReset = LoadReset.Full;
+        }
+
+        // Marks the saved per-node state read, in every shape a save has held it
+        private static void IgnoreSavedNodes(Dec.Recorder recorder)
+        {
+            recorder.Ignore(nameof(nodeEntries));
             recorder.Ignore(nameof(active));
             recorder.Ignore(nameof(debugCurrentFrame));
 
@@ -272,8 +340,6 @@ namespace Arbor
             recorder.Ignore("enumerators");
             recorder.Ignore("debugLastStates");
             recorder.Ignore("debugLastStateFrames");
-
-            ResetToStart();
         }
     }
 }
