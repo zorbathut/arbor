@@ -82,19 +82,54 @@ namespace Arbor
             return identifier.uid != 0;
         }
 
-        // A tree's definition, not its running state: the label that names the parameter, or the constant while there is none. The uid is never recorded, since it comes from a process-wide counter; a parameter read back is known by its label alone until its tree resolves it (TreeDec.BlackboardResolve), so one label names one parameter of each tree that reads it. The key comes first so that its position stays put while the constant comes and goes.
+        // Two forms. Within a built tree's State, such as a Worker's local in a save, the parameter is that tree's registration index, which the State's signatures vouch for on load. Anywhere else it's a tree's definition: the label that names the parameter, or the constant while there is none. The uid is never recorded, since it comes from a process-wide counter; a parameter read back by label is known by it alone until its tree resolves it (TreeDec.BlackboardResolve), so one label names one parameter of each tree that reads it. The key comes first so that its position stays put while the constant comes and goes.
         public void Record(Dec.Recorder recorder)
         {
+            var tree = State.Current.Value?.tree;
+
+            if (recorder.Mode == Dec.Recorder.Direction.Write)
+            {
+                // a tree still building has no signature to vouch for its indices
+                if (!IsConstant() && tree != null && tree.signature != 0 && tree.blackboardLocalIdLookup.TryGetValue(identifier.uid, out int index))
+                {
+                    recorder.Record(ref index, "index");
+                    return;
+                }
+
+                recorder.Record(ref identifier.label, "key");
+                if (IsConstant())
+                {
+                    recorder.Record(ref constant, nameof(constant));
+                }
+                return;
+            }
+
             // Dec reads into the value already there, which a field initializer may have filled; the record is the whole parameter, so a key it leaves out makes a constant rather than keeping the initializer's.
-            if (recorder.Mode == Dec.Recorder.Direction.Read)
+            identifier = default;
+
+            int? savedIndex = null;
+            recorder.Record(ref savedIndex, "index");
+            if (savedIndex.HasValue)
             {
-                identifier = default;
+                if (tree == null || savedIndex.Value < 0 || savedIndex.Value >= tree.blackboardRegistrations.Count)
+                {
+                    Dbg.Err($"Blackboard parameter index {savedIndex.Value} doesn't name a parameter of {(tree == null ? "any tree; it must be read within its State" : tree.ToString())}");
+                    return;
+                }
+
+                var registration = tree.blackboardRegistrations[savedIndex.Value];
+                if (registration.type != typeof(T))
+                {
+                    Dbg.Err($"Blackboard parameter index {savedIndex.Value} of {tree} is {registration.type}, but is read as {typeof(T)}");
+                    return;
+                }
+
+                identifier = registration.id;
+                return;
             }
+
             recorder.Record(ref identifier.label, "key");
-            if (recorder.Mode == Dec.Recorder.Direction.Read || IsConstant())
-            {
-                recorder.Record(ref constant, nameof(constant));
-            }
+            recorder.Record(ref constant, nameof(constant));
         }
 
         public override string ToString()

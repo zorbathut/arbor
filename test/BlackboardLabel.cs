@@ -8,6 +8,7 @@ namespace ArborTest
 {
     // A blackboard parameter a recorder reads back is known by its label alone, and becomes its tree's parameter of that label as the tree builds: the form a tree takes when it is data rather than code.
     [TestFixture]
+    [Dec.RecorderEnumerator.RecordableClosures]
     public partial class BlackboardLabel : Base
     {
         public partial class WriteNode : Node, Dec.IRecordable
@@ -54,6 +55,32 @@ namespace ArborTest
             [Dec.RecorderEnumerator.RecordableEnumerable]
             public override IEnumerable<Result> Worker()
             {
+                yield return Result.Success;
+            }
+        }
+
+        // Holds its parameter in a Worker local across a yield, so a save of its State records the parameter itself.
+        public partial class LocalNode : Node, Dec.IRecordable
+        {
+            public BlackboardParameter<int> ValueId;
+
+            private LocalNode() { }  // exists just for Dec
+            public LocalNode(BlackboardParameter<int> value)
+            {
+                ValueId = value;
+            }
+
+            public void Record(Dec.Recorder recorder)
+            {
+                recorder.Record(ref ValueId, "value");
+            }
+
+            [Dec.RecorderEnumerator.RecordableEnumerable]
+            public override IEnumerable<Result> Worker()
+            {
+                var local = ValueId;
+                yield return Result.Working;
+                local.Set(7);
                 yield return Result.Success;
             }
         }
@@ -269,6 +296,68 @@ namespace ArborTest
                 ExpectErrors(() => parameter.Get(), error => error.Contains("resolved"));
                 ExpectErrors(() => parameter.Set(4), error => error.Contains("resolved"));
             }
+        }
+
+        // A State's save records a parameter it holds as its tree's registration index, whichever way the tree came by the parameter.
+        [Test]
+        public void Save_WorkerLocal_KeepsParameter([Values] CloneBehavior cloneBehavior, [Values] bool recorded)
+        {
+            var node = new LocalNode(BlackboardParameter<int>.Tree("height"));
+            if (recorded)
+            {
+                node = RoundTrip(node);
+            }
+            Build(("Test", node));
+
+            var state = new Arbor.State(Dec.Database<Arbor.TreeDec>.Get("Test"));
+            state.Update();
+            DoCloneBehavior(cloneBehavior, ref state);
+            state.Update();
+
+            using (new Arbor.State.Scope(state))
+            {
+                Assert.AreEqual(7, node.ValueId.Get());
+            }
+        }
+
+        // The index survives a rebuild that mints every parameter a fresh uid, mid-Worker.
+        [Test]
+        public void Save_WorkerLocalAcrossRebuild_KeepsParameter([Values] bool recorded)
+        {
+            LocalNode node = null;
+            void BuildFresh()
+            {
+                node = new LocalNode(BlackboardParameter<int>.Tree("height"));
+                if (recorded)
+                {
+                    node = RoundTrip(node);
+                }
+                Build(("Test", node));
+            }
+
+            BuildFresh();
+            var state = new Arbor.State(Dec.Database<Arbor.TreeDec>.Get("Test"));
+            state.Update();
+            var saved = Dec.Recorder.Write(state);
+
+            Dec.Database.Clear();
+            BuildFresh();
+
+            state = Dec.Recorder.Read<Arbor.State>(saved);
+            state.Update();
+            using (new Arbor.State.Scope(state))
+            {
+                Assert.AreEqual(7, node.ValueId.Get());
+            }
+        }
+
+        // The index form means nothing without the State whose tree it indexes.
+        [Test]
+        public void Save_IndexOutsideState_Errs()
+        {
+            var parameter = default(BlackboardParameter<int>);
+            ExpectErrors(() => parameter = Dec.Recorder.Read<BlackboardParameter<int>>("<Record><recordFormatVersion>1</recordFormatVersion><data><index>0</index></data></Record>"), error => error.Contains("index"));
+            Assert.IsTrue(parameter.IsConstant());
         }
 
         // An empty label is what a constant looks like.
