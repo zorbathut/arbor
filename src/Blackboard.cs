@@ -13,13 +13,13 @@ namespace Arbor
 
         public void Register<T>(BlackboardParameter<T> id)
         {
-            if (id.identifier == null)
+            if (id.IsConstant())
             {
                 Dbg.Err("Attempted to register a blackboard parameter from a constant");
                 return;
             }
 
-            var uid = id.identifier.Value.uid;
+            var uid = id.identifier.uid;
             if (types.ContainsKey(uid))
             {
                 if (types[uid] != typeof(T))
@@ -36,7 +36,7 @@ namespace Arbor
 
         public T Get<T>(BlackboardParameter<T> id)
         {
-            if (id.identifier == null)
+            if (id.IsConstant())
             {
                 return id.constant;
             }
@@ -48,7 +48,7 @@ namespace Arbor
                 return default;
             }
 
-            var uid = id.identifier.Value.uid;
+            var uid = id.identifier.uid;
             if (!types.ContainsKey(uid))
             {
                 Dbg.Err($"Parameter `{id}` is not a known blackboard parameter; when building the tree, either include it as part of an Arbor.Node or register it with `BlackboardParameter<>.RegisterWith()`");
@@ -72,7 +72,7 @@ namespace Arbor
 
         public void Set<T>(BlackboardParameter<T> id, T item)
         {
-            if (id.identifier != null && !types.ContainsKey(id.identifier.Value.uid))
+            if (!id.IsConstant() && !types.ContainsKey(id.identifier.uid))
             {
                 Dbg.Err($"Parameter `{id}` is not a known blackboard parameter; when building the tree, either include it as part of an Arbor.Node or register it with `BlackboardParameter<>.RegisterWith()`");
                 return;
@@ -86,13 +86,19 @@ namespace Arbor
         /// </summary>
         public void TrySet<T>(BlackboardParameter<T> id, T item)
         {
-            if (id.identifier == null)
+            if (id.IsConstant())
             {
                 Dbg.Err("Attempted to set a blackboard parameter from a constant");
                 return;
             }
 
-            var uid = id.identifier.Value.uid;
+            if (!id.IsResolved())
+            {
+                Dbg.Err($"Attempted to set blackboard parameter `{id}` before it was resolved; it must belong to a node of a built tree");
+                return;
+            }
+
+            var uid = id.identifier.uid;
             if (!types.ContainsKey(uid))
             {
                 return;
@@ -173,7 +179,7 @@ namespace Arbor
                 // now we need to yank types out of the tree
                 var tree = State.Current.Value.tree;
                 types = new Dictionary<ulong, Type>();
-                foreach (var (type, id) in tree.blackboardRegistrations)
+                foreach (var (type, id, _) in tree.blackboardRegistrations)
                 {
                     types[id.uid] = type;
                 }

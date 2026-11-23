@@ -288,7 +288,7 @@ namespace Arbor
                 }
             }
 
-            // this is needed for identifier serialization
+            // the blackboard's record reads the tree's registrations through it
             using var scope = new Scope(this);
 
             if (restartNodes)

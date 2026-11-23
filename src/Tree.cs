@@ -20,17 +20,44 @@ namespace Arbor
         [NonSerialized]
         internal Node[] nodes;
 
-        // Serialization help functionality
-        [NonSerialized] internal List<(Type type, BlackboardIdentifier id)> blackboardRegistrations = new();
+        // Serialization help functionality. byLabel marks a parameter that came to the tree as a bare label (BlackboardResolve), rather than one code minted and shares by handing the same value around.
+        [NonSerialized] internal List<(Type type, BlackboardIdentifier id, bool byLabel)> blackboardRegistrations = new();
         [NonSerialized] internal Dictionary<ulong, int> blackboardLocalIdLookup = new Dictionary<ulong, int>();
         [NonSerialized] internal ulong signature = 0;
         [NonSerialized] internal ulong signatureStructure = 0;
+
+        // The first registration under each label, which is where a bare label resolves to, and how a collision between a label and a code-minted parameter is spotted from either side.
+        [NonSerialized] private Dictionary<string, int> blackboardLabelLookup = new Dictionary<string, int>();
 
         [NonSerialized] internal Blackboard blackboardTemplate;
 
         public void BlackboardRegister<T>(BlackboardParameter<T> id)
         {
-            if (id.identifier == null)
+            if (id.IsConstant())
+            {
+                Dbg.Err("Attempted to register a blackboard parameter from a constant");
+                return;
+            }
+
+            if (!id.IsResolved())
+            {
+                Dbg.Err($"Attempted to register blackboard parameter `{id}`, which is known only by its label; a node's own parameters resolve through BlackboardResolve");
+                return;
+            }
+
+            if (signature != 0)
+            {
+                Dbg.Err("Cannot add more blackboard parameters after the tree has been loaded");
+                return;
+            }
+
+            RegisterIdentified(id, byLabel: false);
+        }
+
+        // Registers a node's parameter, first making one known only by its label (a parameter a recorder read, BlackboardParameter.Record) into this tree's parameter of that label: the same one for every node of the tree naming it, minted the first time. Code-minted parameters are registered as they are. A label is either a bare label or a code-minted parameter's within a tree, never both: a bare label can't reach a parameter code holds and sets, so a collision is an error rather than a silent second parameter of one name, from whichever side registers second.
+        public void BlackboardResolve<T>(ref BlackboardParameter<T> id)
+        {
+            if (id.IsConstant())
             {
                 Dbg.Err("Attempted to register a blackboard parameter from a constant");
                 return;
@@ -42,19 +69,61 @@ namespace Arbor
                 return;
             }
 
-            // check if this is already registered
-            if (blackboardLocalIdLookup.TryGetValue(id.identifier.Value.uid, out int existingIndex))
+            if (id.IsResolved())
             {
-                if (blackboardRegistrations[existingIndex].type != typeof(T) || blackboardRegistrations[existingIndex].id.label != id.identifier.Value.label)
+                RegisterIdentified(id, byLabel: false);
+                return;
+            }
+
+            if (blackboardLabelLookup.TryGetValue(id.identifier.label, out int existingIndex))
+            {
+                var existing = blackboardRegistrations[existingIndex];
+                if (!existing.byLabel)
+                {
+                    Dbg.Err($"Blackboard parameter `{id}` is a bare label, but code already holds a parameter of that label in this tree");
+                    return;
+                }
+                if (existing.type != typeof(T))
+                {
+                    Dbg.Err($"Blackboard parameter `{id}` is used as {typeof(T)} here but as {existing.type} elsewhere in this tree");
+                    return;
+                }
+
+                id.identifier = existing.id;
+                return;
+            }
+
+            id.identifier.uid = System.Threading.Interlocked.Increment(ref BlackboardStatics.s_uid);
+            RegisterIdentified(id, byLabel: true);
+        }
+
+        private void RegisterIdentified<T>(BlackboardParameter<T> id, bool byLabel)
+        {
+            // check if this is already registered
+            if (blackboardLocalIdLookup.TryGetValue(id.identifier.uid, out int existingIndex))
+            {
+                if (blackboardRegistrations[existingIndex].type != typeof(T) || blackboardRegistrations[existingIndex].id.label != id.identifier.label)
                 {
                     Dbg.Err($"Blackboard parameter `{id}` is already registered with a different type or label somehow");
                 }
                 return;
             }
 
+            if (blackboardLabelLookup.TryGetValue(id.identifier.label, out int labelIndex))
+            {
+                if (blackboardRegistrations[labelIndex].byLabel != byLabel)
+                {
+                    Dbg.Err($"Blackboard parameter `{id}` is code-minted, but a bare label of that name is already a parameter of this tree");
+                }
+            }
+            else
+            {
+                blackboardLabelLookup[id.identifier.label] = blackboardRegistrations.Count;
+            }
+
             // add to our ordered list
-            blackboardLocalIdLookup[id.identifier.Value.uid] = blackboardRegistrations.Count;
-            blackboardRegistrations.Add((typeof(T), id.identifier.Value));
+            blackboardLocalIdLookup[id.identifier.uid] = blackboardRegistrations.Count;
+            blackboardRegistrations.Add((typeof(T), id.identifier, byLabel));
 
             blackboardTemplate.Register(id);
         }

@@ -112,6 +112,17 @@ namespace Arbor
                                 continue;
                             }
 
+                            // InitFields resolves the field in place, a label read from a recorder becoming its tree's parameter of that label
+                            if (bbp.IsReadOnly)
+                            {
+                                context.ReportDiagnostic(Diagnostic.Create(
+                                    new DiagnosticDescriptor("ARB005", "Invalid Modifier",
+                                        $"The blackboard parameter field '{bbp.Name}' cannot be readonly; its tree resolves it in place.",
+                                        "Arbor.Generator", DiagnosticSeverity.Error, true),
+                                    fieldLocation));
+                                continue;
+                            }
+
                             foundSomething = true;
 
                             var typeString = namedType.TypeArguments[0].ToDisplayString(fullyQualified);
@@ -120,7 +131,7 @@ namespace Arbor
                             source.AppendLine($"  set => {bbp.Name}.Set(value);");
                             source.AppendLine($"}}");
 
-                            initFields.AppendLine($"if (!{bbp.Name}.IsConstant()) treeDec.BlackboardRegister({bbp.Name});");
+                            initFields.AppendLine($"if (!{bbp.Name}.IsConstant()) treeDec.BlackboardResolve(ref {bbp.Name});");
                         }
 
                         // Check to see if this is derived from a Node
