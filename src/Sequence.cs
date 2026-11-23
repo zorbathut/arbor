@@ -3,7 +3,7 @@ using System.Collections.Generic;
 
 namespace Arbor
 {
-    public partial class Sequence : Node
+    public partial class Sequence : Node, Dec.IRecordable
     {
         private Sequence() { }  // exists just for Dec
         public Sequence(params Node[] children)
@@ -34,6 +34,11 @@ namespace Arbor
 
             // I guess we iterated through everything!
             yield return Result.Success;
+        }
+
+        public void Record(Dec.Recorder recorder)
+        {
+            recorder.Shared().Record(ref m_children, "children");
         }
     }
 }

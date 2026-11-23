@@ -117,7 +117,7 @@ namespace ArborTest
             return Dec.Recorder.Read<T>(Dec.Recorder.Write(node));
         }
 
-        private void Build(params (string name, Node root)[] trees)
+        internal static void Build(params (string name, Node root)[] trees)
         {
             UpdateTestParameters(new UnitTestParameters {
                 explicitTypes = new System.Type[] { typeof(PendingTree) }
