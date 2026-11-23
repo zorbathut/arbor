@@ -43,7 +43,7 @@ namespace Arbor
             }
 
             foreach (var type in context.Compilation.SyntaxTrees.SelectMany(tree =>
-                tree.GetRoot().DescendantNodes().OfType<Microsoft.CodeAnalysis.CSharp.Syntax.ClassDeclarationSyntax>().Select(cds => context.Compilation.GetSemanticModel(tree).GetDeclaredSymbol(cds)).Where(type => type.InheritsFrom(arborNodeType))))
+                tree.GetRoot().DescendantNodes().OfType<Microsoft.CodeAnalysis.CSharp.Syntax.ClassDeclarationSyntax>().Select(cds => context.Compilation.GetSemanticModel(tree).GetDeclaredSymbol(cds)).Where(type => type.InheritsFrom(arborNodeType))).Distinct(SymbolEqualityComparer.Default).Cast<INamedTypeSymbol>())
             {
                 var nodeNamespace = type.ContainingNamespace.ToDisplayString(fullyQualified);
 

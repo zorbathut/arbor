@@ -32,5 +32,19 @@ namespace ArborTest
                 }
             }
         }
+
+        // One node type in two declarations, which the generator must emit once; a second emission of the same hint name makes Roslyn drop all of its output, and nothing here compiles.
+        public partial class SplitTestNode : Arbor.Node
+        {
+            public Arbor.BlackboardParameter<int> ReadId;
+        }
+
+        public partial class SplitTestNode
+        {
+            public override IEnumerable<Arbor.Result> Worker()
+            {
+                yield return Arbor.Result.Success;
+            }
+        }
     }
 }
