@@ -84,5 +84,42 @@ namespace ArborTest
             state.Update();
             Assert.AreEqual(2, IncrementNode.IncrementValue);
         }
+
+        public class EmptyTree : Arbor.TreeDec.ITreeFactory
+        {
+            public Node Create(TreeDec tree)
+            {
+                return null;
+            }
+        }
+
+        // A tree with no root updates as a no-op, and resets as one too.
+        [Test]
+        public void EmptyTreeResets([Values] CloneBehavior cloneBehavior)
+        {
+            UpdateTestParameters(new UnitTestParameters {
+                explicitTypes = new System.Type[] { typeof(EmptyTree) }
+            });
+
+            var parser = new Dec.Parser();
+            parser.AddString(Dec.Parser.FileType.Xml, @"
+                <Decs>
+                    <Arbor.TreeDec decName=""Test"">
+                        <worker class=""ArborTest.Reset.EmptyTree"" />
+                    </Arbor.TreeDec>
+                </Decs>
+            ");
+            parser.Finish();
+
+            var state = new Arbor.State(Dec.Database<Arbor.TreeDec>.Get("Test"));
+
+            state.Update();
+            DoCloneBehavior(cloneBehavior, ref state);
+
+            state.Reset();
+            DoCloneBehavior(cloneBehavior, ref state);
+
+            state.Update();
+        }
     }
 }

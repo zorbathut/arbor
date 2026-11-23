@@ -191,7 +191,7 @@ namespace Arbor
         {
             using (new Scope(this))
             {
-                tree.root.Reset();
+                tree.root?.Reset();
             }
         }
 
