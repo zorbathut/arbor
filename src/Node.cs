@@ -43,6 +43,7 @@ namespace Arbor
             nodeIndex = nodeList.Count;
             nodeList.Add(this);
 
+            InitSelf();
             InitFields(treeDec, nodeList);
 
             initted = true;
@@ -167,6 +168,9 @@ namespace Arbor
             currentWorker = null;
             ResetFields();
         }
+
+        // Setup that depends on the node's final fields, run once as the node joins its tree, whichever way the node was built: by a constructor, or by a recorder read that fills its fields after a parameterless constructor has already run. It runs before InitFields, so a child it fills in (a default for one a document left out) joins the tree with the rest; its children haven't joined yet and its own blackboard parameters aren't registered, so it may look at their fields, and ask a parameter IsConstant(), but nothing their own InitSelf sets up, and no parameter's value.
+        protected virtual void InitSelf() { }
 
         public virtual void InitFields(TreeDec treeDec, List<Node> nodeList) { }
         public virtual void ResetFields() { }
